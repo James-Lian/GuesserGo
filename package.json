@@ -15,7 +15,6 @@
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
-    "@terrylinla/react-native-sketch-canvas": "^0.8.0",
     "@rnmapbox/maps": "^10.1.43",
     "expo": "~54.0.6",
     "expo-camera": "~17.0.7",
@@ -39,6 +38,7 @@
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.16.0",
+    "react-native-svg": "15.12.1",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.5.1"
   },

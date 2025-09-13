@@ -1,128 +1,95 @@
+import React, { useRef, useState } from 'react';
+import { View, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
-import { useState } from 'react';
-import { Button, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Entypo from '@expo/vector-icons/Entypo';
-import RNSketchCanvas, { SketchCanvas } from '@terrylinla/react-native-sketch-canvas';
+import { Ionicons, Entypo } from '@expo/vector-icons';
+import FingerDrawing, { FingerDrawingRef } from '@/lib/FingerDrawing';
 
-export default function Camera() {
+export default function Camera({ defaultColor = '#ff0000' }) {
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
     const [isDrawing, setIsDrawing] = useState(false);
+    const ref = useRef<FingerDrawingRef | null>(null);
 
-    if (!permission) {
-        // Camera permissions are still loading.
-        return <View />;
-    }
-
+    if (!permission) return <View />;
     if (!permission.granted) {
-        // Camera permissions are not granted yet.
         return (
-            <View style={styles.container}>
-                <Text style={styles.message}>We need your permission to show the camera</Text>
-                <Button onPress={requestPermission} title="grant permission" />
-            </View>
+            <SafeAreaView style={styles.centered}>
+                <TouchableOpacity onPress={requestPermission} style={styles.permissionButton}>
+                    <Ionicons name="camera" size={32} color="white" />
+                </TouchableOpacity>
+            </SafeAreaView>
         );
     }
 
-    function toggleCameraFacing() {
-        setFacing(current => (current === 'back' ? 'front' : 'back'));
-    }
+    const toggleFacing = () => setFacing((f) => (f === 'back' ? 'front' : 'back'));
 
     return (
         <View style={styles.container}>
             <CameraView style={styles.camera} facing={facing} />
-            <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.button} onPress={toggleCameraFacing}>
-                    <Text style={styles.text}>Flip Camera</Text>
-                </TouchableOpacity>
-            </View>
-            <View>
-                <Entypo name="pencil" size={36} color="black" onPress={setIsDrawing}/>
-            </View>
-            {/*<View>*/}
-            {/*    {isDrawing &&*/}
-            {/*        <SketchCanvas style={{flex: 1}} strokeColor={'black'} strokeWidth={4} />*/}
-            {/*    }*/}
-            {/*</View>*/}
-            <View style={{ flex: 1, flexDirection: 'row' }}>
-                <RNSketchCanvas
-                    containerStyle={{ backgroundColor: 'transparent', flex: 1 }}
-                    canvasStyle={{ backgroundColor: 'transparent', flex: 1 }}
-                    defaultStrokeIndex={0}
-                    defaultStrokeWidth={5}
-                    closeComponent={<View style={styles.functionButton}><Text style={{color: 'white'}}>Close</Text></View>}
-                    undoComponent={<View style={styles.functionButton}><Text style={{color: 'white'}}>Undo</Text></View>}
-                    clearComponent={<View style={styles.functionButton}><Text style={{color: 'white'}}>Clear</Text></View>}
-                    eraseComponent={<View style={styles.functionButton}><Text style={{color: 'white'}}>Eraser</Text></View>}
-                    strokeComponent={color => (
-                        <View style={[{ backgroundColor: color }, styles.strokeColorButton]} />
-                    )}
-                    strokeSelectedComponent={(color, index, changed) => {
-                        return (
-                            <View style={[{ backgroundColor: color, borderWidth: 2 }, styles.strokeColorButton]} />
-                        )
-                    }}
-                    strokeWidthComponent={(w) => {
-                        return (<View style={styles.strokeWidthButton}>
-                                <View  style={{
-                                    backgroundColor: 'white', marginHorizontal: 2.5,
-                                    width: Math.sqrt(w / 3) * 10, height: Math.sqrt(w / 3) * 10, borderRadius: Math.sqrt(w / 3) * 10 / 2
-                                }} />
-                            </View>
-                        )}}
-                    saveComponent={<View style={styles.functionButton}><Text style={{color: 'white'}}>Save</Text></View>}
-                    savePreference={() => {
-                        return {
-                            folder: 'RNSketchCanvas',
-                            filename: String(Math.ceil(Math.random() * 100000000)),
-                            transparent: false,
-                            imageType: 'png'
-                        }
-                    }}
-                />
-            </View>
+
+            {isDrawing && (
+                <View style={styles.overlay} pointerEvents="box-none">
+                    <FingerDrawing ref={ref} />
+                </View>
+            )}
+
+            {/* Camera controls separate from drawing controls */}
+            {!isDrawing && (
+                <View style={styles.bottomBar}>
+                    <TouchableOpacity onPress={toggleFacing} style={styles.iconButton}>
+                        <Ionicons name="camera-reverse" size={28} color="white" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setIsDrawing(true)} style={styles.iconButton}>
+                        <Entypo name="pencil" size={28} color="white" />
+                    </TouchableOpacity>
+                </View>
+            )}
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    container: { flex: 1 },
+    camera: { flex: 1 },
+    overlay: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'transparent',
+    },
+    controls: {
+        position: 'absolute',
+        bottom: 40,
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        width: '100%',
+        padding: 12,
+        borderRadius: 16,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+    },
+    bottomBar: {
+        position: 'absolute',
+        bottom: 20,
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        width: '100%',
+        padding: 12,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        borderRadius: 16,
+    },
+    iconButton: {
+        marginHorizontal: 10,
+        padding: 10,
+        borderRadius: 50,
+        backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    centered: {
         flex: 1,
         justifyContent: 'center',
-    },
-    message: {
-        textAlign: 'center',
-        paddingBottom: 10,
-    },
-    camera: {
-        flex: 1,
-    },
-    buttonContainer: {
-        position: 'absolute',
-        bottom: 64,
-        flexDirection: 'row',
-        backgroundColor: 'transparent',
-        width: '100%',
-        paddingHorizontal: 64,
-    },
-    button: {
-        flex: 1,
         alignItems: 'center',
+        backgroundColor: 'black',
     },
-    text: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'white',
+    permissionButton: {
+        padding: 16,
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.2)',
     },
-    strokeColorButton: {
-        marginHorizontal: 2.5, marginVertical: 8, width: 30, height: 30, borderRadius: 15,
-    },
-    strokeWidthButton: {
-        marginHorizontal: 2.5, marginVertical: 8, width: 30, height: 30, borderRadius: 15,
-        justifyContent: 'center', alignItems: 'center', backgroundColor: '#39579A'
-    },
-    functionButton: {
-        marginHorizontal: 2.5, marginVertical: 8, height: 30, width: 60,
-        backgroundColor: '#39579A', justifyContent: 'center', alignItems: 'center', borderRadius: 5,
-    }
 });
