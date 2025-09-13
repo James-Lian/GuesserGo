@@ -20,9 +20,9 @@ const FingerDrawing = () => {
     const currentStroke = useRef<Point[]>([]);
 
     const handleTouchStart = (evt: any) => {
-        const {locationX, locationY} = evt.nativeEvent;
-        currentStroke.current = [{x: locationX, y: locationY}];
-        setStrokes(prev => [...prev, {points: currentStroke.current}]);
+        const { locationX, locationY } = evt.nativeEvent;
+        currentStroke.current = [{ x: locationX, y: locationY }];
+        setStrokes(prev => [...prev, { points: currentStroke.current }]);
     };
 
     const handleTouchMove = (evt: any) => {
