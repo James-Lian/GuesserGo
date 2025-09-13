@@ -1,14 +1,14 @@
-import React, { useRef, useState } from 'react';
-import { View, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { Ionicons, Entypo } from '@expo/vector-icons';
-import FingerDrawing, { FingerDrawingRef } from '@/lib/FingerDrawing';
+import FingerDrawing from '@/components/FingerDrawing';
 
 export default function Camera({ defaultColor = '#ff0000' }) {
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
     const [isDrawing, setIsDrawing] = useState(false);
-    const ref = useRef<FingerDrawingRef | null>(null);
 
     if (!permission) return <View />;
     if (!permission.granted) {
@@ -29,7 +29,7 @@ export default function Camera({ defaultColor = '#ff0000' }) {
 
             {isDrawing && (
                 <View style={styles.overlay} pointerEvents="box-none">
-                    <FingerDrawing ref={ref} />
+                    <FingerDrawing />
                 </View>
             )}
 

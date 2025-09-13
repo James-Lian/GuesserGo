@@ -68,7 +68,9 @@ export default function Explore() {
 
                 </MapView>
             : <View className='flex-1 flex flex-col justify-center items-center'>
-                <CustomButton>
+                <CustomButton
+                    onPress={() => {Linking.openSettings()}}
+                >
                     <Text style={{color: "black",}}>Location permission denied.</Text>
                     <Text style={{color: "black",}}>Open settings.</Text>
                 </CustomButton>
