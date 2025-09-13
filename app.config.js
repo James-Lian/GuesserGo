@@ -68,6 +68,12 @@ export default {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
         }
       ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Allow $(PRODUCT_NAME) to access your device motion"
+        }
+      ],
     ],
     "experiments": {
       "typedRoutes": true,
