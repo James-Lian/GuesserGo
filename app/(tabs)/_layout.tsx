@@ -1,23 +1,33 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
+import React from 'react';
+import {useColorScheme} from "nativewind";
+import {HapticTab} from "@/app-example/components/haptic-tab";
+import {Colors} from "@/app-example/constants/theme";
+import {IconSymbol} from "@/app-example/components/ui/icon-symbol.ios";
 
 export default function TabLayout() {
-    return (
-        <Tabs screenOptions={{ tabBarActiveTintColor: 'blue' }}>
-            <Tabs.Screen
-                name="index"
-                options={{
-                    title: 'Home',
-                    tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} />,
-                }}
-            />
-            <Tabs.Screen
-                name="camera"
-                options={{
-                    title: 'Camera',
-                    tabBarIcon: ({ color }) => <FontAwesome size={28} name="cog" color={color} />,
-                }}
-            />
-        </Tabs>
-    );
+  const colorScheme = useColorScheme();
+
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarButton: HapticTab,
+      }}>
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="explore"
+        options={{
+          title: 'Explore',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+        }}
+      />
+    </Tabs>
+  );
 }
