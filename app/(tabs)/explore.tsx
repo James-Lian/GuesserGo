@@ -11,6 +11,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Linking from "expo-linking";
 import CustomButton from '@/components/CustomButton';
 
+Mapbox.setAccessToken("pk.eyJ1IjoiamFtZXMtbGlhbiIsImEiOiJjbWR4azhsaTcwNHUwMmpxN3hybjI2aHNiIn0.33zeGfb12zMby5ZZSVin9Q");
+
 export function requestPermissions(locationPermissions: null | boolean, setLocationPermissions: React.Dispatch<React.SetStateAction<boolean | null>>) {
     // immediately executed async function
     (async () => {
