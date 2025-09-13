@@ -1,5 +1,5 @@
 import React, {useRef, useState, forwardRef} from 'react';
-import {View, Button, StyleSheet} from 'react-native';
+import {View, Button, StyleSheet, Pressable, ColorValue} from 'react-native';
 import Svg, {Path} from 'react-native-svg';
 
 export type Point = {x: number; y: number};
@@ -16,6 +16,9 @@ function pointsToSvgPath(points: Point[]) {
 
 const FingerDrawing = () => {
     const [strokes, setStrokes] = useState<Stroke[]>([]);
+    const colourSelection = ["black", "white", "red", "green", "blue", "magenta", "yellow"];
+    const [selectedColour, setSelectedColour] = useState("black");
+    const [strokeColours, setStrokeColours] = useState<ColorValue[]>([]);
     const [svgString, setSvgString] = useState<string>('');
     const currentStroke = useRef<Point[]>([]);
 
@@ -23,6 +26,7 @@ const FingerDrawing = () => {
         const { locationX, locationY } = evt.nativeEvent;
         currentStroke.current = [{ x: locationX, y: locationY }];
         setStrokes(prev => [...prev, { points: currentStroke.current }]);
+        setStrokeColours(prev => [...prev, selectedColour]);
     };
 
     const handleTouchMove = (evt: any) => {
@@ -37,18 +41,20 @@ const FingerDrawing = () => {
 
     const resetDrawing = () => {
         setStrokes([]);
+        setStrokeColours([]);
         setSvgString('');
         currentStroke.current = [];
     }
 
     const undoLastStroke = () => {
         setStrokes(prev => prev.slice(0, -1));
+        setStrokeColours(prev => prev.slice(0, -1));
         currentStroke.current = [];
     }
 
     const exportSvg = () => {
         const paths = strokes
-            .map(s => `<path d="${pointsToSvgPath(s.points)}" stroke="black" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />`)
+            .map((s, ind) => `<path d="${pointsToSvgPath(s.points)}" stroke="${String(strokeColours[ind])}" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />`)
             .join('');
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">${paths}</svg>`;
         setSvgString(svg);
@@ -57,6 +63,21 @@ const FingerDrawing = () => {
 
     return (
         <View style={styles.container}>
+            <View
+                className="flex flex-row gap-3 pb-[6px]"
+            >
+                {colourSelection.map((item, idx) => (
+                    <Pressable
+                        key={idx}
+                        className="w-[30px] h-[30px] rounded-[12px] border-[3px]"
+                        style={{backgroundColor: item, borderColor: selectedColour === item ? "white": "black"}}
+                        onPress={() => {
+                            setSelectedColour(item);
+                        }}
+                    >
+                    </Pressable>
+                ))}
+            </View>
             <View
                 style={styles.drawingArea}
                 onStartShouldSetResponder={() => true}
@@ -69,8 +90,8 @@ const FingerDrawing = () => {
                         <Path
                             key={idx}
                             d={pointsToSvgPath(s.points)}
-                            stroke="black"
-                            strokeWidth={2}
+                            stroke={strokeColours[idx]}
+                            strokeWidth={6}
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             fill="none"
