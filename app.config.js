@@ -1,5 +1,8 @@
-{
+require('dotenv').config();
+
+export default {
   "expo": {
+    "owner": "jameslian",
     "name": "htn-scavenger",
     "slug": "htn-scavenger",
     "version": "1.0.0",
@@ -47,7 +50,24 @@
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
           "recordAudioAndroid": true
         }
-      ]
+      ],
+      [
+        "@rnmapbox/maps", {
+          "RNMapboxMapsDownloadToken": process.env.MAPBOX_DOWNLOADSDK
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to display your location on a map."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
+        }
+      ],
     ],
     "experiments": {
       "typedRoutes": true,
