@@ -1,6 +1,8 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 
+import "../../global.css"
+
 export default function TabLayout() {
     return (
         <Tabs
@@ -10,7 +12,7 @@ export default function TabLayout() {
         <Tabs.Screen
             name="index"
             options={{
-                title: 'Home',
+                title: 'Rooms',
             }}
         />
         <Tabs.Screen

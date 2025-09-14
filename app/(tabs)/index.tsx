@@ -1,13 +1,174 @@
-import {StyleSheet, View} from 'react-native';
+import { createRoom, deleteRoom, joinRoom } from '@/lib/firestore';
+import { useGlobals } from '@/lib/useGlobals';
+import { useEffect, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View, TextInput, Modal, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function HomeScreen() {
-  return (
-      <View>
+export default function Rooms() {
+    const { onlineRoomId, setOnlineRoomId, hostOrNo, setHostOrNo } = useGlobals();
 
-      </View>
-  );
+    const [state, setState] = useState("idle");
+    const [buttonsDisabled, setButtonsDisabled] = useState(false);
+
+    const [waitingDots, setWaitingDots] = useState("");
+    const maxWaitingDots = 3;
+    useEffect(() => {
+        if (state === "waiting-room-idle") {
+            const interval = setInterval(() => {
+                if (waitingDots.length < maxWaitingDots) {
+                    setWaitingDots(prev => prev + ".");
+                } else {
+                    setWaitingDots("");
+                }
+            }, 1000);
+            
+            return () => clearInterval(interval);
+        }
+    }, [state]);
+
+    // Name input
+    const [modalVisible, setModalVisible] = useState(false);
+    const [nameValue, setNameValue] = useState('');
+
+    const handleNetworkButtons = (callback: () => void) => {
+        setButtonsDisabled(true);
+        callback();
+    }
+
+    const handleModalClose = () => {
+        setModalVisible(!modalVisible);
+        setButtonsDisabled(false);
+    }
+
+    return ( 
+        <SafeAreaView style={{display: "flex", flex: 1, alignItems: "center", justifyContent: "center"}}>
+            <View className="flex flex-1 items-center justify-center">
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => {
+                        handleModalClose();
+                    }}
+                >
+                    <Pressable className="flex flex-1 justify-center items-center bg-[#00000099] p-[12px]" onPress={() => {handleModalClose()}}>
+                        <View className="flex bg-white rounded-lg pt-[12px] px-[12px]">
+                            <View className="flex">
+                                <Text className="text-lg">Input your name</Text>
+                                <TextInput
+                                    autoCapitalize="words"
+                                    autoCorrect={false}
+                                    allowFontScaling={false}
+                                    placeholder="Input your name"
+                                    placeholderTextColor={"lightgray"}
+                                    value={nameValue}
+                                    onChangeText={(txt) => {setNameValue(txt);}}
+                                />
+                            </View>
+                            <View className="flex flex-row self-stretch items-center justify-center">
+                                <Pressable 
+                                    style={{
+                                        padding: 12,
+                                        borderRadius: 12,
+                                        flex: 1
+                                    }}
+                                    onPress={() => {
+                                        handleModalClose();
+                                    }}
+                                >
+                                    <Text className="text-lg">Cancel</Text>
+                                </Pressable>
+                                <Pressable 
+                                    style={{
+                                        padding: 12,
+                                        borderRadius: 12,
+                                        flex: 1
+                                    }}
+                                    onPress={async () => {
+                                        if (state === "creating") {
+                                            if (onlineRoomId !== "") {
+                                                deleteRoom(onlineRoomId);
+                                            }
+                                            const { roomId: newRoomId } = await createRoom();
+                                            setOnlineRoomId(newRoomId);
+                                            setHostOrNo(true);
+    
+                                            setState("waiting-room-idle");
+                                            handleModalClose();
+                                        } else if (state === "joining") {
+                                            setHostOrNo(false);
+                                            await joinRoom();
+                                            // FIX
+                                        }
+                                    }}
+                                >
+                                    <Text className="text-blue-500 text-lg">Confirm</Text>
+                                </Pressable>
+                            </View>
+                        </View>
+                    </Pressable>
+                </Modal>
+            </View>
+            {state === "idle" || state === "creating"
+                && <>
+                    <TouchableOpacity
+                        onPress={() => {
+                            handleNetworkButtons(async () => {
+                                setState("creating");
+
+                                setModalVisible(true);
+                                setButtonsDisabled(false);
+                            });
+                        }}
+                        disabled={buttonsDisabled}
+                    >
+                        <Text>{state === "creating" ? "Creating..." : "Create a room"}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => {
+                            handleNetworkButtons(async () => {
+                                setState("joining");
+
+                                setModalVisible(true);
+                                setButtonsDisabled(false);
+                            })
+                        }}
+                        disabled={buttonsDisabled}
+                    >
+                        <Text>Join a room</Text>
+                    </TouchableOpacity>
+                </>
+            }
+            {state === "waiting-room-idle" &&
+                <View className="flex flex-1">
+                    <Text>Waiting for participants to join{waitingDots}</Text>
+                    <Text>{onlineRoomId}</Text>
+
+                    <TouchableOpacity>
+                        <Text>Start!</Text>
+                    </TouchableOpacity>
+                    <View className="flex flex-1 overflow-y-auto flex-col">
+                        <View className="flex flex-row flex-1 items-center">
+                            <Text>Name</Text>
+                            <Text>Role</Text>
+                            
+                            {hostOrNo &&
+                                <TouchableOpacity>
+                                    <Text className="text-red-300">Kick</Text>
+                                </TouchableOpacity>
+                            }
+                        </View>
+                    </View>
+                    {hostOrNo 
+                        ? <TouchableOpacity>
+                            <Text>Cancel room</Text>
+                        </TouchableOpacity> 
+                        : <TouchableOpacity>
+                            <Text>Leave</Text>
+                        </TouchableOpacity> 
+                    }
+                </View>
+            }
+        </SafeAreaView>
+    );
 }
-
-const styles = StyleSheet.create({
-
-});

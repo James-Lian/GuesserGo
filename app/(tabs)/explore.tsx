@@ -1,5 +1,5 @@
 import * as Location from 'expo-location';
-import { useFocusEffect } from "expo-router";
+import { useFocusEffect, Stack, router } from "expo-router";
 import React, { useRef, useState } from "react";
 import { Text, View } from "react-native";
 
@@ -44,38 +44,69 @@ export default function Explore() {
     return (
         <View style={{ flex: 1 }}>
             {locationPermissions
-                ? <MapView style={{ flex: 1 }}
-                    styleURL={Mapbox.StyleURL.Outdoors}
-                    compassEnabled={true}
-                >
-                    <Camera
-                        defaultSettings={{
-                            centerCoordinate: locationData == null ? [0, 0] : [locationData?.coords.longitude, locationData?.coords.latitude] ,
-                            zoomLevel: 18,
-                        }}
-                        followUserLocation={true}
-                        ref={CameraRef}
-                    />
+                ? <>
+                    <MapView style={{ flex: 1 }}
+                        styleURL={Mapbox.StyleURL.Outdoors}
+                        compassEnabled={true}
+                    >
+                        <Camera
+                            defaultSettings={{
+                                centerCoordinate: locationData == null ? [0, 0] : [locationData?.coords.longitude, locationData?.coords.latitude] ,
+                                zoomLevel: 18,
+                            }}
+                            followUserLocation={true}
+                            ref={CameraRef}
+                        />
 
-                    <LocationPuck
-                        visible={true}
-                        puckBearing="heading"
-                        puckBearingEnabled={true}
-                        pulsing={{
-                            isEnabled: true,
-                            color: "black",
-                        }}
-                    />
-
-                </MapView>
-            : <View className='flex-1 flex flex-col justify-center items-center'>
-                <CustomButton
-                    onPress={() => {Linking.openSettings()}}
-                >
-                    <Text style={{color: "black",}}>Location permission denied.</Text>
-                    <Text style={{color: "black",}}>Open settings.</Text>
-                </CustomButton>
-            </View>
+                        <LocationPuck
+                            visible={true}
+                            puckBearing="heading"
+                            puckBearingEnabled={true}
+                            pulsing={{
+                                isEnabled: true,
+                                color: "black",
+                            }}
+                        />
+                    </MapView>
+                    <View className="absolute z-10 flex align-center items-center w-full bottom-12">
+                        <CustomButton
+                            // do more
+                            onPress={(e) => {
+                                router.replace("/camera");
+                            }}
+                        >
+                            <View
+                                style={{
+                                    paddingTop: 12, 
+                                    paddingBottom: 12, 
+                                    paddingLeft: 16, 
+                                    paddingRight: 16, 
+                                    display: "flex", 
+                                    borderRadius: 12,
+                                    shadowOffset: {
+                                        width: 3,
+                                        height: 3,
+                                    },
+                                    shadowColor: "black",
+                                    shadowOpacity: 0.8,
+                                    shadowRadius: 8,
+                                    elevation: 5,
+                                    backgroundColor: "rgba(123, 123, 123, 0.3)"
+                                }}
+                            >
+                                <Text style={{fontSize: 22, color: "white", fontWeight: "bold"}}>Start an Expedition!</Text>
+                            </View>
+                        </CustomButton>
+                    </View>
+                </>
+                : <View className='flex-1 flex flex-col justify-center items-center'>
+                    <CustomButton
+                        onPress={() => {Linking.openSettings()}}
+                    >
+                        <Text style={{color: "black",}}>Location permission denied.</Text>
+                        <Text style={{color: "black",}}>Open settings.</Text>
+                    </CustomButton>
+                </View>
             }
         </View>
     )
