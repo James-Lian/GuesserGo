@@ -16,7 +16,7 @@ export function getUserId() {
 export async function joinRoom(roomId: string, playerName: string) {
     const roomRef = doc(db, "rooms", roomId);
     await updateDoc(roomRef, {
-        participants: arrayUnion([{"id": auth.currentUser?.uid, "name": playerName, "location": null}])
+        participants: arrayUnion({"id": auth.currentUser?.uid, "name": playerName, "location": null})
     });
 }
 
@@ -26,7 +26,8 @@ export interface RoomTypes {
     createdAt: Timestamp,
     expireAt: Timestamp,
     participants: { "id": string, "name": string, "location": Location.LocationObjectCoords | null }[],
-    started: boolean
+    started: boolean,
+    images: {"svg": string, "downloadLink": string, "locationCoords": Location.LocationObjectCoords}[],
 }
 
 export async function createRoom(hostName: string) {
@@ -52,6 +53,7 @@ export async function createRoom(hostName: string) {
         // autodelete data 5 hours from initialization time
         participants: [{"id": hostId, "name" : hostName, "location": null}],
         started: false,
+        images: [],
     }
     
     await setDoc(roomRef, roomData);
@@ -108,4 +110,14 @@ export function listenToRoomData(roomId: string, callback: (d: RoomTypes) => voi
 export async function deleteRoom(roomId: string) {
     const roomRef = doc(db, "rooms", roomId);
     await deleteDoc(roomRef);
+}
+
+export async function hostStartsGame(roomId: string, images: RoomTypes["images"]) {
+    const roomRef = doc(db, "rooms", roomId);
+    for (let image of images) {
+        await updateDoc(roomRef, {
+            images: arrayUnion(image),
+            started: true,
+        });
+    }
 }

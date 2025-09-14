@@ -1,3 +1,4 @@
+import { useGlobals } from '@/lib/useGlobals';
 import React, {useRef, useState, forwardRef} from 'react';
 import {View, Button, StyleSheet, Pressable, ColorValue} from 'react-native';
 import Svg, {Path} from 'react-native-svg';
@@ -19,7 +20,9 @@ const FingerDrawing = () => {
     const colourSelection = ["black", "white", "red", "green", "blue", "magenta", "yellow"];
     const [selectedColour, setSelectedColour] = useState("black");
     const [strokeColours, setStrokeColours] = useState<ColorValue[]>([]);
-    const [svgString, setSvgString] = useState<string>('');
+    
+    const {svgVar, setSvgVar} = useGlobals();
+
     const currentStroke = useRef<Point[]>([]);
 
     const handleTouchStart = (evt: any) => {
@@ -37,28 +40,29 @@ const FingerDrawing = () => {
             copy[copy.length - 1] = {points: [...currentStroke.current]};
             return copy;
         });
+        exportSvg();
     };
 
     const resetDrawing = () => {
         setStrokes([]);
         setStrokeColours([]);
-        setSvgString('');
         currentStroke.current = [];
-    }
+        exportSvg();
+    };
 
     const undoLastStroke = () => {
         setStrokes(prev => prev.slice(0, -1));
         setStrokeColours(prev => prev.slice(0, -1));
         currentStroke.current = [];
-    }
+        exportSvg();
+    };
 
     const exportSvg = () => {
         const paths = strokes
             .map((s, ind) => `<path d="${pointsToSvgPath(s.points)}" stroke="${String(strokeColours[ind])}" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />`)
             .join('');
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">${paths}</svg>`;
-        setSvgString(svg);
-        console.log('SVG Export:', svg);
+        setSvgVar(svg);
     };
 
     return (
@@ -101,7 +105,6 @@ const FingerDrawing = () => {
             </View>
             <Button title="Undo" onPress={undoLastStroke} />
             <Button title="Reset" onPress={resetDrawing} />
-            <Button title="Export SVG" onPress={exportSvg} />
         </View>
     );
 };
