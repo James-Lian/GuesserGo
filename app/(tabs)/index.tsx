@@ -36,11 +36,11 @@ export default function Rooms() {
 
     const handleParticipantList = (parti: RoomTypes["participants"]) => {
         setParticipants(parti);
-        if (!participants.map(item => item.id).includes(String(getUserId()))) {
-            Alert.alert("Removed from room", `You were removed from the room [${onlineRoomId}]. If you were not kicked out, there may be a connectivity issue. Please try again later.`, [{ text: 'OK'}])
-        } else (
-            
-        )
+        // if (!participants.map(item => item.id).includes(String(getUserId()))) {
+        //     Alert.alert("Removed from room", `You were removed from the room [${onlineRoomId}]. If you were not kicked out, there may be a connectivity issue. Please try again later.`, [{ text: 'OK'}])
+        // } else (
+        //
+        // )
     }
 
     const handleNetworkButtons = (callback: () => void) => {
@@ -117,7 +117,7 @@ export default function Rooms() {
                                             // FIX
                                         }
 
-                                        handleParticipantList()
+                                        // handleParticipantList()
                                         stopListening = listenToParticipants(onlineRoomId, (parti) => {
                                             handleParticipantList(parti);
                                         });
@@ -185,7 +185,7 @@ export default function Rooms() {
                             {hostOrNo &&
                                 <TouchableOpacity
                                     onPress={() => {
-                                        deleteParticipant(onlineRoomId, )
+                                        // deleteParticipant(onlineRoomId, )
                                     }}
                                 >
                                     <Text className="text-red-300">Kick</Text>
