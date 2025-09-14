@@ -1,6 +1,6 @@
-import { doc, getDoc, setDoc, deleteDoc, Timestamp, updateDoc, arrayRemove, arrayUnion, onSnapshot } from "firebase/firestore";
+// import { doc, getDoc, setDoc, deleteDoc, Timestamp, updateDoc, arrayRemove, arrayUnion, onSnapshot } from "firebase/firestore";
 
-import { db, auth } from "./firebaseConfig";
+// import { db, auth } from "./firebaseConfig";
 
 function generateRoomId(length = 6): string {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -8,106 +8,120 @@ function generateRoomId(length = 6): string {
 }
 
 export function getUserId() {
-    return auth.currentUser?.uid;
+    // return auth.currentUser?.uid;
+    return "single-player-user"; // Placeholder for single player
 }
 
 export async function joinRoom(roomId: string, playerName: string) {
-    const roomRef = doc(db, "rooms", roomId);
-    await updateDoc(roomRef, {
-        participants: arrayUnion([{"id": auth.currentUser?.uid, "name": playerName}])
-    });
+    // const roomRef = doc(db, "rooms", roomId);
+    // await updateDoc(roomRef, {
+    //     participants: arrayUnion([{"id": auth.currentUser?.uid, "name": playerName}])
+    // });
+    console.log("joinRoom called - multiplayer disabled");
 }
 
 export interface RoomTypes {
     hostId: string,
     roomId: string,
-    createdAt: Timestamp,
-    expireAt: Timestamp,
+    createdAt: any, // Timestamp,
+    expireAt: any, // Timestamp,
     participants: { "id": string, "name": string }[],
     started: boolean
 }
 
 export async function createRoom(hostName: string) {
-    let roomId = generateRoomId();
-    let roomRef = doc(db, "rooms", roomId);
-    let roomExists = await getDoc(roomRef);
+    // let roomId = generateRoomId();
+    // let roomRef = doc(db, "rooms", roomId);
+    // let roomExists = await getDoc(roomRef);
 
-    // Retry until unique ID is found
-    while (roomExists.exists()) {
-        roomId = generateRoomId();
-        roomRef = doc(db, "rooms", roomId);
-        roomExists = await getDoc(roomRef);
-    }
+    // // Retry until unique ID is found
+    // while (roomExists.exists()) {
+    //     roomId = generateRoomId();
+    //     roomRef = doc(db, "rooms", roomId);
+    //     roomExists = await getDoc(roomRef);
+    // }
 
-    const hostId = auth.currentUser?.uid;
+    // const hostId = auth.currentUser?.uid;
 
-    await setDoc(roomRef, {
-        hostId,
-        roomId,
-        createdAt: Timestamp.now(),
-        expireAt: Timestamp.fromDate(new Date(Date.now() + 5 * 60 * 60 * 1000)),
-        // autodelete data 5 hours from initialization time
-        participants: [{"id": hostId, "name" : hostName}],
-        started: false,
-    });
+    // await setDoc(roomRef, {
+    //     hostId,
+    //     roomId,
+    //     createdAt: Timestamp.now(),
+    //     expireAt: Timestamp.fromDate(new Date(Date.now() + 5 * 60 * 60 * 1000)),
+    //     // autodelete data 5 hours from initialization time
+    //     participants: [{"id": hostId, "name" : hostName}],
+    //     started: false,
+    // });
+
+    const roomId = generateRoomId();
+    const hostId = "single-player-host";
 
     return {
         hostId,
         roomId,
-        createdAt: Timestamp.now(),
-        expireAt: Timestamp.fromDate(new Date(Date.now() + 5 * 60 * 60 * 1000)),
+        createdAt: new Date(),
+        expireAt: new Date(Date.now() + 5 * 60 * 60 * 1000),
         participants: [{"id": hostId, "name": hostName}],
         started: false,
     };
 }
 
 export async function deleteParticipant(roomId: string, participantName: string | undefined | null) {
-    const roomRef = doc(db, "rooms", roomId);
-    const roomSnap = await getDoc(roomRef);
+    // const roomRef = doc(db, "rooms", roomId);
+    // const roomSnap = await getDoc(roomRef);
 
-    if (!roomSnap.exists()) return;
+    // if (!roomSnap.exists()) return;
 
-    const data = roomSnap.data();
-    let updatedParticipants;
-    if (participantName) {
-        updatedParticipants = data.participants.filter(
-            (p: { id: string, name: string }) => p.name !== participantName
-        );
-    } else if (participantName === null) {
-        updatedParticipants = data.participants.filter(
-            (p: {id: string, name: string}) => p.id !== auth.currentUser?.uid
-        )
-    }
+    // const data = roomSnap.data();
+    // let updatedParticipants;
+    // if (participantName) {
+    //     updatedParticipants = data.participants.filter(
+    //         (p: { id: string, name: string }) => p.name !== participantName
+    //     );
+    // } else if (participantName === null) {
+    //     updatedParticipants = data.participants.filter(
+    //         (p: {id: string, name: string}) => p.id !== auth.currentUser?.uid
+    //     )
+    // }
 
-    await updateDoc(roomRef, {
-        participants: updatedParticipants
-    });
+    // await updateDoc(roomRef, {
+    //     participants: updatedParticipants
+    // });
+    console.log("deleteParticipant called - multiplayer disabled");
 }
 
 export async function getAllParticipants(roomId: string) {
-    const roomRef = doc(db, "rooms", roomId);
-    const roomSnap = await getDoc(roomRef);
+    // const roomRef = doc(db, "rooms", roomId);
+    // const roomSnap = await getDoc(roomRef);
 
-    if (!roomSnap.exists()) return;
+    // if (!roomSnap.exists()) return;
 
-    const data = roomSnap.data();
-    return data.participants;
+    // const data = roomSnap.data();
+    // return data.participants;
+    console.log("getAllParticipants called - multiplayer disabled");
+    return [];
 }
 
 export function listenToRoomData(roomId: string, callback: (participants: {"id": string, "name": string}[]) => void) {
-  const roomRef = doc(db, "rooms", roomId);
+  // const roomRef = doc(db, "rooms", roomId);
 
-  const unsubscribe = onSnapshot(roomRef, (docSnap) => {
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        callback(data.participants);
-    }
-  });
+  // const unsubscribe = onSnapshot(roomRef, (docSnap) => {
+  //   if (docSnap.exists()) {
+  //       const data = docSnap.data();
+  //       callback(data.participants);
+  //   }
+  // });
 
-  return unsubscribe; // Call this to stop listening when needed
+  // return unsubscribe; // Call this to stop listening when needed
+  console.log("listenToRoomData called - multiplayer disabled");
+  return () => {}; // Return empty function for single player
 }
 
 export async function deleteRoom(roomId: string) {
-    const roomRef = doc(db, "rooms", roomId);
-    await deleteDoc(roomRef);
+    // const roomRef = doc(db, "rooms", roomId);
+    // await deleteDoc(roomRef);
+    console.log("deleteRoom called - multiplayer disabled");
 }
+
+// Alias for listenToRoomData to match the import in index.tsx
+export const listenToParticipants = listenToRoomData;

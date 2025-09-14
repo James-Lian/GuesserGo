@@ -21,6 +21,12 @@ export default function TabLayout() {
                 title: 'Explore',
             }}
         />
+        <Tabs.Screen
+            name="streetview"
+            options={{
+                title: 'Street View',
+            }}
+        />
         </Tabs>
     );
 }

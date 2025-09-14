@@ -3,7 +3,6 @@ import { useFocusEffect, Stack, router } from "expo-router";
 import React, { useRef, useState } from "react";
 import { Text, View } from "react-native";
 
-import Mapbox, { MapView, Camera, Images, Image, LocationPuck, UserTrackingMode, MarkerView } from "@rnmapbox/maps"; // import default export
 
 import { useGlobals } from '@/lib/useGlobals';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,7 +10,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Linking from "expo-linking";
 import CustomButton from '@/components/CustomButton';
 
-Mapbox.setAccessToken("pk.eyJ1IjoiamFtZXMtbGlhbiIsImEiOiJjbWR4azhsaTcwNHUwMmpxN3hybjI2aHNiIn0.33zeGfb12zMby5ZZSVin9Q");
 
 export function requestPermissions(locationPermissions: null | boolean, setLocationPermissions: React.Dispatch<React.SetStateAction<boolean | null>>) {
     // immediately executed async function
@@ -43,37 +41,13 @@ export default function Explore() {
         requestPermissions(locationPermissions, setLocationPermissions);
     }, [locationPermissions, setLocationPermissions]));
 
-    const CameraRef = useRef(null);
-
     return (
         <View style={{ flex: 1 }}>
             {locationPermissions
                 ? <>
-                    <MapView style={{ flex: 1 }}
-                        styleURL={Mapbox.StyleURL.Outdoors}
-                        compassEnabled={true}
-                    >
-                        <Camera
-                            defaultSettings={{
-                                centerCoordinate: locationData == null ? [0, 0] : [locationData?.coords.longitude, locationData?.coords.latitude] ,
-                                zoomLevel: 18,
-                            }}
-                            followUserLocation={true}
-                            ref={CameraRef}
-                        />
-                        <LocationPuck
-                            visible={true}
-                            puckBearing="heading"
-                            puckBearingEnabled={true}
-                            pulsing={{
-                                isEnabled: true,
-                                color: "black",
-                            }}
-                        />
-                    </MapView>
-                    <View className="absolute z-10 flex align-center items-center w-full bottom-12">
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <Text style={{ fontSize: 24, marginBottom: 20 }}>Explore Screen</Text>
                         <CustomButton
-                            // do more
                             onPress={(e) => {
                                 router.replace("/camera");
                             }}
