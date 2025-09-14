@@ -63,7 +63,7 @@ export default function Camera({ defaultColor = '#ff0000' }) {
                     </TouchableOpacity>
                 </View>
             )}
-            <GameUI />
+            {/* <GameUI /> */}
         </View>
     );
 }

@@ -1,4 +1,4 @@
-import { createRoom, deleteParticipant, deleteRoom, getUserId, joinRoom, listenToParticipants, RoomTypes } from '@/lib/firestore';
+import { createRoom, deleteParticipant, deleteRoom, getUserId, joinRoom, listenToRoomData, RoomTypes } from '@/lib/firestore';
 import { useGlobals } from '@/lib/useGlobals';
 import { Unsubscribe } from 'firebase/auth';
 import { useEffect, useRef, useState } from 'react';
@@ -35,7 +35,6 @@ export default function Rooms() {
     const [nameValue, setNameValue] = useState('');
 
     const [participants, setParticipants] = useState<RoomTypes["participants"]>([]);
-<<<<<<< HEAD
     const [roomData, setRoomData] = useState<RoomTypes | null>(null);
     let stopListening: null | Unsubscribe = null;
 
@@ -60,17 +59,6 @@ export default function Rooms() {
                 setState("scavenging");
             }
         }
-=======
-    let stopListening;
-
-    const handleParticipantList = (parti: RoomTypes["participants"]) => {
-        setParticipants(parti);
-        // if (!participants.map(item => item.id).includes(String(getUserId()))) {
-        //     Alert.alert("Removed from room", `You were removed from the room [${onlineRoomId}]. If you were not kicked out, there may be a connectivity issue. Please try again later.`, [{ text: 'OK'}])
-        // } else (
-        //
-        // )
->>>>>>> c577d8e329f79031f511becfe86e0db7e4299140
     }
 
     const handleNetworkButtons = (callback: () => void) => {
@@ -85,11 +73,7 @@ export default function Rooms() {
 
     return ( 
         <SafeAreaView style={{display: "flex", flex: 1, alignItems: "center", justifyContent: "center"}}>
-<<<<<<< HEAD
             <View className="absolute flex flex-1 items-center justify-center">
-=======
-            <View className="flex flex-1 items-center justify-center">
->>>>>>> c577d8e329f79031f511becfe86e0db7e4299140
                 <Modal
                     animationType="slide"
                     transparent={true}
@@ -145,28 +129,20 @@ export default function Rooms() {
                                             setOnlineRoomId(roomId);
                                             setHostOrNo(true);
                                             setJoined(true);
-    
-                                            setState("waiting-room-idle");
-                                            handleModalClose();
                                         } else if (state === "joining") {
                                             setHostOrNo(false);
                                             setJoined(true);
 
                                             await joinRoom(onlineRoomId, nameValue);
                                             // FIX
+
                                         }
-<<<<<<< HEAD
                                         
                                         setState("waiting-room-idle");
                                         stopListening = listenToRoomData(newRoomId, (d) => {
                                             handleParticipantList(d);
-=======
-
-                                        // handleParticipantList()
-                                        stopListening = listenToParticipants(onlineRoomId, (parti) => {
-                                            handleParticipantList(parti);
->>>>>>> c577d8e329f79031f511becfe86e0db7e4299140
                                         });
+                                        handleModalClose();
                                     }}
                                 >
                                     <Text className="text-blue-500 text-lg">Confirm</Text>
@@ -176,7 +152,7 @@ export default function Rooms() {
                     </Pressable>
                 </Modal>
             </View>
-            {state === "idle" || state === "creating"
+            {(state === "idle" || state === "creating")
                 && <>
                     <TouchableOpacity
                         onPress={() => {
@@ -199,13 +175,9 @@ export default function Rooms() {
                         placeholder="Room Id (e.g. jGInAU)"
                         placeholderTextColor={"lightgray"}
                         value={onlineRoomId}
-<<<<<<< HEAD
                         style={{padding: 8}}
                         className="text-xl font-semibold"
                         onChangeText={(txt) => {setOnlineRoomId(txt.trim());}}
-=======
-                        onChangeText={(txt) => {setOnlineRoomId(txt);}}
->>>>>>> c577d8e329f79031f511becfe86e0db7e4299140
                     />
                     <TouchableOpacity
                         onPress={() => {
@@ -232,7 +204,6 @@ export default function Rooms() {
                     <TouchableOpacity>
                         <Text className="text-center">Start!</Text>
                     </TouchableOpacity>
-<<<<<<< HEAD
                     <View className="flex flex-1 overflow-y-auto flex-col items-center">
                         <View className="flex flex-row mt-[12px] items-center px-[80px] gap-[60px]">
                             <Text className="text-lg font-semibold">Player List</Text>
@@ -258,23 +229,6 @@ export default function Rooms() {
                                 </View>
                             )
                         })}
-=======
-                    <View className="flex flex-1 overflow-y-auto flex-col">
-                        <View className="flex flex-row flex-1 items-center">
-                            <Text>Name</Text>
-                            <Text>Role</Text>
-                            
-                            {hostOrNo &&
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        // deleteParticipant(onlineRoomId, )
-                                    }}
-                                >
-                                    <Text className="text-red-300">Kick</Text>
-                                </TouchableOpacity>
-                            }
-                        </View>
->>>>>>> c577d8e329f79031f511becfe86e0db7e4299140
                     </View>
                     {hostOrNo 
                         ? <TouchableOpacity
@@ -282,14 +236,11 @@ export default function Rooms() {
                                 setJoined(false);
                                 setOnlineRoomId("");
                                 setHostOrNo(false);
-<<<<<<< HEAD
                                 setState("idle");
 
                                 if (stopListening) {
                                     stopListening();
                                 }
-=======
->>>>>>> c577d8e329f79031f511becfe86e0db7e4299140
                             }}
                         >
                             <Text>Cancel room</Text>
@@ -299,19 +250,28 @@ export default function Rooms() {
                                 setJoined(false);
                                 setOnlineRoomId("");
                                 setHostOrNo(false);
-<<<<<<< HEAD
                                 setState("idle");
                                 if (stopListening) {
                                     stopListening();
                                 }
-=======
->>>>>>> c577d8e329f79031f511becfe86e0db7e4299140
 
                                 deleteParticipant(onlineRoomId, null)
                             }}
                         >
                             <Text>Leave</Text>
                         </TouchableOpacity>
+                    }
+                </View>
+            }
+            {state === "scavenging" &&
+                <View>
+                    {hostOrNo 
+                        ? <TouchableOpacity>
+                            <Text>See the map!</Text>
+                        </TouchableOpacity>
+                        : <Text>
+                            Start scavenging!
+                        </Text>
                     }
                 </View>
             }
