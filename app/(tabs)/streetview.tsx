@@ -14,7 +14,7 @@ export default function StreetView() {
 
     const startGame = async () => {
         if (!locationPermissions) {
-            Alert.alert('Error', 'Location permission required');
+            Alert.alert('Error', 'Location access-referencing permission required');
             return;
         }
 
