@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useGlobals } from '@/lib/useGlobals';
 import CustomButton from '@/components/CustomButton';
-import { GameStateManager } from '@/lib/gameState';
+import { useAppDispatch } from '@/lib/hooks';
+import { startNewGame } from '@/lib/gameSlice';
 import { router } from 'expo-router';
 
 interface StreetViewData {
@@ -13,14 +14,14 @@ interface StreetViewData {
 }
 
 export default function StreetView() {
+    const dispatch = useAppDispatch();
     const { locationPermissions } = useGlobals();
     const [loading, setLoading] = useState(false);
-    const gameStateManager = GameStateManager.getInstance();
 
 
     const getStreetViewImage = async (lat: number, lon: number): Promise<string> => {
         // Google Street View Static API
-        const apiKey = 'YOUR_GOOGLE_STREET_VIEW_API_KEY'; // You'll need to get this from Google Cloud Console
+        const apiKey = 'process.env.GOOGLE_MAPS_KEY'; // You'll need to get this from Google Cloud Console
         const size = '400x300';
         const fov = '90';
         const heading = Math.floor(Math.random() * 360); // Random heading
@@ -38,8 +39,8 @@ export default function StreetView() {
 
         setLoading(true);
         try {
-            // Start a new game session
-            const session = gameStateManager.startNewGame();
+            // Start a new game session using Redux
+            dispatch(startNewGame());
             
             // Navigate to the game screen
             router.push('/game');
@@ -50,9 +51,7 @@ export default function StreetView() {
             setLoading(false);
         }
     };
-
-
-
+    
     if (!locationPermissions) {
         return (
             <SafeAreaView style={styles.container}>
@@ -93,16 +92,15 @@ export default function StreetView() {
                 </View>
 
                 <View style={styles.buttonContainer}>
-                    <CustomButton
+                    <TouchableOpacity
                         onPress={startGame}
                         disabled={loading}
+                        style={[styles.button, loading && styles.buttonDisabled]}
                     >
-                        <View style={styles.button}>
-                            <Text style={styles.buttonText}>
-                                {loading ? 'Starting...' : 'Start Game'}
-                            </Text>
-                        </View>
-                    </CustomButton>
+                        <Text style={styles.buttonText}>
+                            {loading ? 'Starting...' : 'Start Game'}
+                        </Text>
+                    </TouchableOpacity>
                 </View>
             </View>
         </SafeAreaView>
@@ -195,6 +193,9 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         backgroundColor: '#007AFF',
         alignItems: 'center',
+    },
+    buttonDisabled: {
+        backgroundColor: '#ccc',
     },
     buttonText: {
         color: 'white',

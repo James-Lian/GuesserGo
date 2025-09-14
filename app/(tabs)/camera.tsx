@@ -1,8 +1,4 @@
-// satellite image of somewhere between x km
-// user has to get to the location and take a picture which is x% similar
-// geoguessr style rounds and points system, micro scale
-
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Alert, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
@@ -11,34 +7,20 @@ import * as Location from 'expo-location';
 import LocationImageOverlay from "@/components/ImagePopUp";
 import GameUI from "@/components/GameUI";
 import { calculateSimilarity, storeImageWithLocation } from "@/lib/imageUtils";
-import { GameStateManager } from "@/lib/gameState";
-import { GameSession, GameRound } from "@/lib/types";
+import { useAppDispatch, useAppSelector } from '@/lib/hooks';
+import { submitPhoto, timeUp } from '@/lib/gameSlice';
 
 export default function Camera({ defaultColor = '#ff0000' }) {
+    const dispatch = useAppDispatch();
+    const { gameSession, currentRound } = useAppSelector(state => state.game);
+    
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
-    const [gameSession, setGameSession] = useState<GameSession | null>(null);
-    const [currentRound, setCurrentRound] = useState<GameRound | null>(null);
     const [isPhotoCaptured, setIsPhotoCaptured] = useState(false);
     const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
     const [capturedLocation, setCapturedLocation] = useState<Location.LocationObject['coords'] | null>(null);
-    // Timer removed - using manual progression
+    
     const cameraRef = useRef<CameraView>(null);
-    const gameStateManager = GameStateManager.getInstance();
-
-    // Simple function to refresh game state
-    const refreshGameState = () => {
-        const session = gameStateManager.getCurrentSession();
-        const round = gameStateManager.getCurrentRound();
-        setGameSession(session);
-        setCurrentRound(round);
-        console.log('Camera: State refreshed, status:', session?.gameStatus);
-    };
-
-    // Initialize game state on mount
-    useEffect(() => {
-        refreshGameState();
-    }, []);
 
     // Timer removed - using manual progression instead
 
@@ -64,7 +46,7 @@ export default function Camera({ defaultColor = '#ff0000' }) {
                 // Store image with location
                 await storeImageWithLocation(photo.uri, location.coords);
                 
-                // Update state
+                // Update local state
                 setCapturedPhoto(photo.uri);
                 setCapturedLocation(location.coords);
                 setIsPhotoCaptured(true);
@@ -90,24 +72,29 @@ export default function Camera({ defaultColor = '#ff0000' }) {
             // Calculate similarity using placeholder function
             const similarity = calculateSimilarity(capturedPhoto, capturedLocation);
             
-            // Submit photo to game state manager
-            const points = gameStateManager.submitPhoto(capturedPhoto, {
+            // Calculate points (this will be done in the Redux slice)
+            const photoLocation = {
                 latitude: capturedLocation.latitude,
                 longitude: capturedLocation.longitude
-            }, similarity);
+            };
+
+            // Dispatch photo submission to Redux
+            dispatch(submitPhoto({
+                photoUri: capturedPhoto,
+                photoLocation,
+                similarity,
+                points: 0 // Will be calculated in the slice
+            }));
 
             Alert.alert(
                 'Photo Submitted!', 
-                `Similarity: ${similarity}%\nPoints earned: ${points}`
+                `Similarity: ${similarity}%\nMoving to results...`
             );
 
             // Reset photo capture state
             setIsPhotoCaptured(false);
             setCapturedPhoto(null);
             setCapturedLocation(null);
-            
-            // Refresh game state after submission
-            refreshGameState();
         } catch (error) {
             console.error('Error submitting photo:', error);
             Alert.alert('Error', 'Failed to submit photo');
@@ -176,8 +163,7 @@ export default function Camera({ defaultColor = '#ff0000' }) {
                 <TouchableOpacity 
                     onPress={() => {
                         console.log('Camera: Skip round button pressed');
-                        gameStateManager.timeUp();
-                        refreshGameState();
+                        dispatch(timeUp());
                     }} 
                     style={styles.skipButton}
                 >
