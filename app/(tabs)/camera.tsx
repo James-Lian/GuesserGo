@@ -1,14 +1,21 @@
+// satellite image of somewhere between x km
+// user has to get to the location and take a picture which is x% similar
+// geoguessr style rounds and points system, micro scale
+
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { Ionicons, Entypo } from '@expo/vector-icons';
 import FingerDrawing from '@/components/FingerDrawing';
+import LocationImageOverlay from "@/components/ImagePopUp";
+import GameUI from "@/components/GameUI";
 
 export default function Camera({ defaultColor = '#ff0000' }) {
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
     const [isDrawing, setIsDrawing] = useState(false);
+    const [score, setScore] = useState(0);
 
     if (!permission) return <View />;
     if (!permission.granted) {
@@ -23,9 +30,21 @@ export default function Camera({ defaultColor = '#ff0000' }) {
 
     const toggleFacing = () => setFacing((f) => (f === 'back' ? 'front' : 'back'));
 
+    const handleImagePress = () => {
+        alert('Image Pressed!'); //animation here + wait for opponent (geoguessr opponent has 5 sec)
+        setScore(score + 100); // increase score by 10
+    }
+
     return (
         <View style={styles.container}>
             <CameraView style={styles.camera} facing={facing} />
+            <LocationImageOverlay
+                targetLat={43.47260261491713}
+                targetLon={-80.53998}
+                radius={100}
+                imageSource={require('../../assets/flower.png')}
+                onPress={handleImagePress}
+            />
 
             {isDrawing && (
                 <View style={styles.overlay} pointerEvents="box-none">
@@ -44,6 +63,7 @@ export default function Camera({ defaultColor = '#ff0000' }) {
                     </TouchableOpacity>
                 </View>
             )}
+            <GameUI />
         </View>
     );
 }
