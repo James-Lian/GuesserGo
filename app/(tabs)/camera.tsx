@@ -2,7 +2,7 @@
 // user has to get to the location and take a picture which is x% similar
 // geoguessr style rounds and points system, micro scale
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
@@ -16,6 +16,7 @@ export default function Camera({ defaultColor = '#ff0000' }) {
     const [permission, requestPermission] = useCameraPermissions();
     const [isDrawing, setIsDrawing] = useState(false);
     const [score, setScore] = useState(0);
+    const cameraRef = useRef<CameraView>(null);
 
     if (!permission) return <View />;
     if (!permission.granted) {
@@ -34,10 +35,21 @@ export default function Camera({ defaultColor = '#ff0000' }) {
         alert('Image Pressed!'); //animation here + wait for opponent (geoguessr opponent has 5 sec)
         setScore(score + 100); // increase score by 10
     }
+    
+    const takePhoto = async () => {
+        console.log('Taking photo');
+        const photoURI = await cameraRef.current?.takePictureAsync();
+        console.log('Photo taken', photoURI);
+    }
 
     return (
         <View style={styles.container}>
             <CameraView style={styles.camera} facing={facing} />
+            {/* take photo button */}
+            <TouchableOpacity onPress={() => takePhoto()} style={styles.iconButton}>
+                <Ionicons name="camera" size={28} color="white" />
+                <Text>Take Photo</Text>
+            </TouchableOpacity>
             {/* <LocationImageOverlay
                 targetLat={43.47260261491713}
                 targetLon={-80.53998}
