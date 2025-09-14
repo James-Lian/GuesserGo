@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, deleteDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc, Timestamp, updateDoc, arrayRemove, arrayUnion } from "firebase/firestore";
 
 import { db, auth } from "./firebaseConfig";
 
@@ -7,11 +7,14 @@ function generateRoomId(length = 6): string {
     return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
-export async function joinRoom() {
-    
+export async function joinRoom(roomId: string, playerName: string) {
+    const roomRef = doc(db, "rooms", roomId);
+    await updateDoc(roomRef, {
+        participants: arrayUnion([{"id": auth.currentUser?.uid, "name": playerName}])
+    });
 }
 
-export async function createRoom() {
+export async function createRoom(hostName: string) {
     let roomId = generateRoomId();
     let roomRef = doc(db, "rooms", roomId);
     let roomExists = await getDoc(roomRef);
@@ -30,16 +33,40 @@ export async function createRoom() {
         roomId,
         createdAt: Timestamp.now(),
         expireAt: Timestamp.fromDate(new Date(Date.now() + 5 * 60 * 60 * 1000)),
-        // autodelete data 5 hous from initialization time
-        participants: [hostId],
+        // autodelete data 5 hours from initialization time
+        participants: [{"id": hostId, "name" : hostName}],
     });
 
     return {
         hostId,
         roomId,
         createdAt: Timestamp.now(),
-        participants: [hostId],
+        expireAt: Timestamp.fromDate(new Date(Date.now() + 5 * 60 * 60 * 1000)),
+        participants: [{"id": hostId, "name": hostName}],
     };
+}
+
+export async function deleteParticipant(roomId: string, participantName: string | undefined | null) {
+    const roomRef = doc(db, "rooms", roomId);
+    const roomSnap = await getDoc(roomRef);
+
+    if (!roomSnap.exists()) return;
+
+    const data = roomSnap.data();
+    let updatedParticipants;
+    if (participantName) {
+        updatedParticipants = data.participants.filter(
+            (p: { id: string, name: string }) => p.name !== participantName
+        );
+    } else if (participantName === null) {
+        updatedParticipants = data.participants.filter(
+            (p: {id: string, name: string}) => p.id !== auth.currentUser?.uid
+        )
+    }
+
+    await updateDoc(roomRef, {
+        participants: updatedParticipants
+    });
 }
 
 export async function deleteRoom(roomId: string) {

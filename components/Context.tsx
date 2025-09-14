@@ -12,6 +12,8 @@ export const defaults = {
     setOnlineRoomId: (_: string) => {},
     hostOrNo: false,
     setHostOrNo: (_: SetStateAction<boolean>) => {},
+    joined: false,
+    setJoined: (_: SetStateAction<boolean>) => {},
 
 }
 
@@ -25,6 +27,8 @@ export interface GlobalContextTypes {
     setOnlineRoomId: Dispatch<string>,
     hostOrNo: boolean,
     setHostOrNo: Dispatch<SetStateAction<boolean>>,
+    joined: boolean,
+    setJoined: Dispatch<SetStateAction<boolean>>,
 }
 
 export const GlobalContext = createContext<GlobalContextTypes>(defaults);
@@ -39,6 +43,7 @@ export const ContextProvider = ({ children } : ComponentProps) => {
 
     const [onlineRoomId, setOnlineRoomId] = useState(defaults.onlineRoomId);
     const [hostOrNo, setHostOrNo] = useState(defaults.hostOrNo);
+    const [joined, setJoined] = useState<boolean>(defaults.joined);
 
     return (
         <GlobalContext.Provider value={{ 
@@ -50,6 +55,8 @@ export const ContextProvider = ({ children } : ComponentProps) => {
             setOnlineRoomId,
             hostOrNo,
             setHostOrNo,
+            joined,
+            setJoined,
         }}>
             {children}
         </GlobalContext.Provider>)

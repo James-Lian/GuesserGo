@@ -1,11 +1,11 @@
-import { createRoom, deleteRoom, joinRoom } from '@/lib/firestore';
+import { createRoom, deleteParticipant, deleteRoom, joinRoom } from '@/lib/firestore';
 import { useGlobals } from '@/lib/useGlobals';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, TextInput, Modal, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Rooms() {
-    const { onlineRoomId, setOnlineRoomId, hostOrNo, setHostOrNo } = useGlobals();
+    const { onlineRoomId, setOnlineRoomId, hostOrNo, setHostOrNo, setJoined } = useGlobals();
 
     const [state, setState] = useState("idle");
     const [buttonsDisabled, setButtonsDisabled] = useState(false);
@@ -89,15 +89,18 @@ export default function Rooms() {
                                             if (onlineRoomId !== "") {
                                                 deleteRoom(onlineRoomId);
                                             }
-                                            const { roomId: newRoomId } = await createRoom();
+                                            const { roomId: newRoomId } = await createRoom(nameValue);
                                             setOnlineRoomId(newRoomId);
                                             setHostOrNo(true);
+                                            setJoined(true);
     
                                             setState("waiting-room-idle");
                                             handleModalClose();
                                         } else if (state === "joining") {
                                             setHostOrNo(false);
-                                            await joinRoom();
+                                            setJoined(true);
+
+                                            await joinRoom(onlineRoomId, nameValue);
                                             // FIX
                                         }
                                     }}
@@ -124,6 +127,15 @@ export default function Rooms() {
                     >
                         <Text>{state === "creating" ? "Creating..." : "Create a room"}</Text>
                     </TouchableOpacity>
+                    <TextInput
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        allowFontScaling={false}
+                        placeholder="Room Id (e.g. jGInAU)"
+                        placeholderTextColor={"lightgray"}
+                        value={onlineRoomId}
+                        onChangeText={(txt) => {setOnlineRoomId(txt);}}
+                    />
                     <TouchableOpacity
                         onPress={() => {
                             handleNetworkButtons(async () => {
@@ -160,12 +172,26 @@ export default function Rooms() {
                         </View>
                     </View>
                     {hostOrNo 
-                        ? <TouchableOpacity>
+                        ? <TouchableOpacity
+                            onPress={() => {
+                                setJoined(false);
+                                setOnlineRoomId("");
+                                setHostOrNo(false);
+                            }}
+                        >
                             <Text>Cancel room</Text>
                         </TouchableOpacity> 
-                        : <TouchableOpacity>
+                        : <TouchableOpacity
+                            onPress={() => {
+                                setJoined(false);
+                                setOnlineRoomId("");
+                                setHostOrNo(false);
+
+                                deleteParticipant()
+                            }}
+                        >
                             <Text>Leave</Text>
-                        </TouchableOpacity> 
+                        </TouchableOpacity>
                     }
                 </View>
             }
