@@ -15,9 +15,9 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app);
-export const auth = getAuth(app);
+export const firebase = initializeApp(firebaseConfig);
+export const db = getFirestore(firebase);
+export const auth = getAuth(firebase);
 signInAnonymously(auth).then(
     () => {
         const uid = auth.currentUser?.uid;

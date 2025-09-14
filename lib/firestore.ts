@@ -26,7 +26,8 @@ export interface RoomTypes {
     createdAt: Timestamp,
     expireAt: Timestamp,
     participants: { "id": string, "name": string, "location": Location.LocationObjectCoords | null }[],
-    started: boolean
+    started: boolean,
+    images: {"svg": string, "downloadLink": string, "locationCoords": number[]}[],
 }
 
 export async function createRoom(hostName: string) {
@@ -52,6 +53,7 @@ export async function createRoom(hostName: string) {
         // autodelete data 5 hours from initialization time
         participants: [{"id": hostId, "name" : hostName, "location": null}],
         started: false,
+        images: [],
     }
     
     await setDoc(roomRef, roomData);
