@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -23,10 +23,38 @@ export default function StreetViewPreview({
     totalRounds, 
     onComplete 
 }: StreetViewPreviewProps) {
+    const [imageLoading, setImageLoading] = useState(true);
+    const [imageError, setImageError] = useState(false);
+    const [imageKey, setImageKey] = useState(0);
+
     const handleContinue = () => {
         console.log('StreetViewPreview: Continue button pressed, calling onComplete');
         onComplete();
     };
+
+    const handleImageLoad = () => {
+        setImageLoading(false);
+        setImageError(false);
+    };
+
+    const handleImageError = () => {
+        setImageLoading(false);
+        setImageError(true);
+        console.error('Failed to load street view image:', streetViewImage);
+    };
+
+    const handleRetry = () => {
+        setImageError(false);
+        setImageLoading(true);
+        setImageKey(prev => prev + 1); // Force image reload by changing key
+    };
+
+    // Reset loading state when streetViewImage changes
+    useEffect(() => {
+        setImageLoading(true);
+        setImageError(false);
+        setImageKey(prev => prev + 1);
+    }, [streetViewImage]);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -41,10 +69,29 @@ export default function StreetViewPreview({
             </View>
 
             <View style={styles.imageContainer}>
+                {imageLoading && (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color="#007AFF" />
+                        <Text style={styles.loadingText}>Loading street view...</Text>
+                    </View>
+                )}
+                {imageError && (
+                    <View style={styles.errorContainer}>
+                        <Ionicons name="image-outline" size={64} color="#ccc" />
+                        <Text style={styles.errorText}>Failed to load street view</Text>
+                        <Text style={styles.errorSubtext}>Please try again</Text>
+                        <TouchableOpacity style={styles.retryButton} onPress={handleRetry}>
+                            <Text style={styles.retryButtonText}>Retry</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
                 <Image 
+                    key={imageKey}
                     source={{ uri: streetViewImage }} 
-                    style={styles.streetViewImage}
+                    style={[styles.streetViewImage, (imageLoading || imageError) && styles.hiddenImage]}
                     resizeMode="cover"
+                    onLoad={handleImageLoad}
+                    onError={handleImageError}
                 />
                 <View style={styles.overlay}>
                     <View style={styles.locationInfo}>
@@ -167,6 +214,57 @@ const styles = StyleSheet.create({
     bottomContinueButtonText: {
         color: 'white',
         fontSize: 18,
+        fontWeight: 'bold',
+    },
+    loadingContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+    },
+    loadingText: {
+        marginTop: 16,
+        fontSize: 16,
+        color: '#666',
+    },
+    errorContainer: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f5f5f5',
+    },
+    errorText: {
+        marginTop: 16,
+        fontSize: 18,
+        color: '#666',
+        fontWeight: 'bold',
+    },
+    errorSubtext: {
+        marginTop: 8,
+        fontSize: 14,
+        color: '#999',
+    },
+    hiddenImage: {
+        opacity: 0,
+    },
+    retryButton: {
+        marginTop: 16,
+        backgroundColor: '#007AFF',
+        paddingHorizontal: 24,
+        paddingVertical: 12,
+        borderRadius: 8,
+    },
+    retryButtonText: {
+        color: 'white',
+        fontSize: 16,
         fontWeight: 'bold',
     },
 });

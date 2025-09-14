@@ -24,7 +24,14 @@ export default function Game() {
 
     // Generate street view image URL
     const generateStreetViewImage = useCallback((lat: number, lon: number): string => {
-        const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY || '';
+        const apiKey = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
+        
+        if (!apiKey) {
+            console.warn('Google Maps API key not found, using placeholder image');
+            // Return a placeholder image URL
+            return `https://via.placeholder.com/640x480/cccccc/666666?text=Street+View+Image+Placeholder`;
+        }
+        
         const size = '640x480';
         const fov = '90';
         const heading = Math.floor(Math.random() * 360);
@@ -43,6 +50,9 @@ export default function Game() {
             const centerLon = -80.53998;
             const randomLocation = generateRandomLocation(centerLat, centerLon, 5);
             const streetViewUrl = generateStreetViewImage(randomLocation.latitude, randomLocation.longitude);
+            
+            console.log('Generated street view URL:', streetViewUrl);
+            console.log('API Key present:', !!process.env.EXPO_PUBLIC_GOOGLE_API_KEY);
             
             dispatch(startRound({
                 targetLocation: randomLocation,
@@ -193,12 +203,3 @@ const styles = StyleSheet.create({
     },
     debugButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
 });
-
-
-
-
-
-
-
-
-

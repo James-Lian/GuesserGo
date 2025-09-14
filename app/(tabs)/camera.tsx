@@ -4,13 +4,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import LocationImageOverlay from "@/components/ImagePopUp";
-import GameUI from "@/components/GameUI";
-import { calculateSimilarity, storeImageWithLocation } from "@/lib/imageUtils";
+import GameUI from '@/components/GameUI';
+import { calculateSimilarity, storeImageWithLocation } from '@/lib/imageUtils';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { submitPhoto, timeUp } from '@/lib/gameSlice';
 
-export default function Camera({ defaultColor = '#ff0000' }) {
+export default function Camera() {
     const dispatch = useAppDispatch();
     const { gameSession, currentRound } = useAppSelector(state => state.game);
     
@@ -21,8 +20,6 @@ export default function Camera({ defaultColor = '#ff0000' }) {
     const [capturedLocation, setCapturedLocation] = useState<Location.LocationObject['coords'] | null>(null);
     
     const cameraRef = useRef<CameraView>(null);
-
-    // Timer removed - using manual progression instead
 
     if (!permission) return <View />;
     if (!permission.granted) {
@@ -101,9 +98,6 @@ export default function Camera({ defaultColor = '#ff0000' }) {
         }
     };
 
-    const handleImagePress = () => {
-        alert('Image Pressed!'); //animation here + wait for opponent (geoguessr opponent has 5 sec)
-    }
 
     if (!gameSession || !currentRound) {
         return (
@@ -147,13 +141,6 @@ export default function Camera({ defaultColor = '#ff0000' }) {
                 isPhotoCaptured={isPhotoCaptured}
             />
 
-            <LocationImageOverlay
-                targetLat={currentRound.targetLocation.latitude}
-                targetLon={currentRound.targetLocation.longitude}
-                radius={5000} // 5km radius
-                imageSource={require('../../assets/flower.png')}
-                onPress={handleImagePress}
-            />
 
             {/* Camera controls */}
             <View style={styles.bottomBar}>

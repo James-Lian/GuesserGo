@@ -1,35 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { useGlobals } from '@/lib/useGlobals';
-import CustomButton from '@/components/CustomButton';
 import { useAppDispatch } from '@/lib/hooks';
 import { startNewGame } from '@/lib/gameSlice';
-import { router } from 'expo-router';
-
-interface StreetViewData {
-    latitude: number;
-    longitude: number;
-    imageUrl: string;
-}
 
 export default function StreetView() {
     const dispatch = useAppDispatch();
     const { locationPermissions } = useGlobals();
     const [loading, setLoading] = useState(false);
 
-
-    const getStreetViewImage = async (lat: number, lon: number): Promise<string> => {
-        // Google Street View Static API
-        const apiKey = 'process.env.GOOGLE_MAPS_KEY'; // You'll need to get this from Google Cloud Console
-        const size = '400x300';
-        const fov = '90';
-        const heading = Math.floor(Math.random() * 360); // Random heading
-        
-        const url = `https://maps.googleapis.com/maps/api/streetview?size=${size}&location=${lat},${lon}&fov=${fov}&heading=${heading}&pitch=0&key=${apiKey}`;
-        
-        return url;
-    };
 
     const startGame = async () => {
         if (!locationPermissions) {
@@ -39,10 +20,7 @@ export default function StreetView() {
 
         setLoading(true);
         try {
-            // Start a new game session using Redux
             dispatch(startNewGame());
-            
-            // Navigate to the game screen
             router.push('/game');
         } catch (error) {
             console.error('Error starting game:', error);

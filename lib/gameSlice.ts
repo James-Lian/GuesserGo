@@ -177,10 +177,6 @@ const gameSlice = createSlice({
       state.error = action.payload;
     },
 
-    // Set street view image
-    setStreetViewImage: (state, action: PayloadAction<string>) => {
-      state.streetViewImage = action.payload;
-    },
   },
 });
 
@@ -209,7 +205,6 @@ export const {
   reset,
   setLoading,
   setError,
-  setStreetViewImage,
 } = gameSlice.actions;
 
 export default gameSlice.reducer;

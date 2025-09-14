@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { GameRound } from '@/lib/gameState';
+import { GameRound } from '@/lib/types';
 
 interface ScoringScreenProps {
     round: GameRound;
@@ -67,7 +67,7 @@ export default function ScoringScreen({ round, onNext, isLastRound }: ScoringScr
                         <Ionicons name="location" size={20} color="#666" />
                         <Text style={styles.detailLabel}>Distance:</Text>
                         <Text style={styles.detailValue}>
-                            {round.proximity ? `${round.proximity.toFixed(0)}m` : 'N/A'}
+                            {round.distance ? `${(round.distance * 1000).toFixed(0)}m` : 'N/A'}
                         </Text>
                     </View>
 
@@ -76,7 +76,7 @@ export default function ScoringScreen({ round, onNext, isLastRound }: ScoringScr
                         <Text style={styles.detailLabel}>Time taken:</Text>
                         <Text style={styles.detailValue}>
                             {round.endTime && round.startTime 
-                                ? `${Math.round((round.endTime - round.startTime) / 1000)}s`
+                                ? `${Math.round((new Date(round.endTime).getTime() - new Date(round.startTime).getTime()) / 1000)}s`
                                 : 'N/A'
                             }
                         </Text>

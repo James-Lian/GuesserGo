@@ -1,11 +1,10 @@
 import * as Location from 'expo-location';
-import { useFocusEffect, Stack, router } from "expo-router";
-import React, { useRef, useState } from "react";
+import { useFocusEffect, router } from "expo-router";
+import React from "react";
 import { Text, View } from "react-native";
 
 
 import { useGlobals } from '@/lib/useGlobals';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import * as Linking from "expo-linking";
 import CustomButton from '@/components/CustomButton';

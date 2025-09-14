@@ -1,7 +1,9 @@
+export type GameStatus = 'waiting' | 'streetview' | 'camera' | 'scoring' | 'finished';
+
 export interface GameData {
     score: number;
     timer: number;
-    opponents?: number; // Made optional for single player
+    opponents?: number;
     kmRadius: number;
     round: number;
     maxRounds: number;
@@ -9,7 +11,7 @@ export interface GameData {
         latitude: number;
         longitude: number;
     };
-    gameStatus: 'waiting' | 'streetview' | 'camera' | 'scoring' | 'finished';
+    gameStatus: GameStatus;
     playerRank?: number;
     totalPlayers?: number;
 }
@@ -20,28 +22,28 @@ export interface GameRound {
         latitude: number;
         longitude: number;
     };
-    streetViewImage: string;
-    timeLimit: number; // seconds
-    startTime: number;
-    endTime?: number;
+    streetViewUrl: string;
+    timeLimit: number;
+    startTime: string;
+    endTime?: string | null;
     photoLocation?: {
         latitude: number;
         longitude: number;
-    };
-    photoUri?: string;
+    } | null;
+    photoUri?: string | null;
     similarity?: number;
-    proximity?: number; // distance in meters
+    distance?: number;
     points?: number;
-    completed: boolean;
+    isCompleted: boolean;
 }
 
 export interface GameSession {
-    sessionId: string;
+    gameId: string;
     totalRounds: number;
     currentRound: number;
     rounds: GameRound[];
     totalScore: number;
-    gameStatus: 'waiting' | 'streetview' | 'camera' | 'scoring' | 'finished';
-    startTime: number;
-    endTime?: number;
+    gameStatus: GameStatus;
+    startTime: string;
+    endTime?: string | null;
 }
