@@ -38,13 +38,13 @@ export default function Camera({ defaultColor = '#ff0000' }) {
     return (
         <View style={styles.container}>
             <CameraView style={styles.camera} facing={facing} />
-            <LocationImageOverlay
+            {/* <LocationImageOverlay
                 targetLat={43.47260261491713}
                 targetLon={-80.53998}
                 radius={100}
                 imageSource={require('../../assets/flower.png')}
                 onPress={handleImagePress}
-            />
+            /> */}
 
             {isDrawing && (
                 <View style={styles.overlay} pointerEvents="box-none">

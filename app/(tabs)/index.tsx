@@ -12,7 +12,6 @@ export default function Rooms() {
     const [buttonsDisabled, setButtonsDisabled] = useState(false);
 
     const [waitingDots, setWaitingDots] = useState("");
-    const waitingDotsRef = useRef(waitingDots);
     const maxWaitingDots = 3;
     useEffect(() => {
         if (state === "waiting-room-idle") {
@@ -38,7 +37,7 @@ export default function Rooms() {
     const [roomData, setRoomData] = useState<RoomTypes | null>(null);
     let stopListening: null | Unsubscribe = null;
 
-    const handleParticipantList = (d: RoomTypes) => {
+    const handleRoomData = (d: RoomTypes) => {
         if (d.participants !== participants) {
             setParticipants(d.participants);
         }
@@ -72,7 +71,7 @@ export default function Rooms() {
     }
 
     return ( 
-        <SafeAreaView style={{display: "flex", flex: 1, alignItems: "center", justifyContent: "center"}}>
+        <SafeAreaView style={{display: "flex", flex: 1, alignItems: "center", justifyContent: "center"}} className='bg-orange-50'>
             <View className="absolute flex flex-1 items-center justify-center">
                 <Modal
                     animationType="slide"
@@ -140,7 +139,7 @@ export default function Rooms() {
                                         
                                         setState("waiting-room-idle");
                                         stopListening = listenToRoomData(newRoomId, (d) => {
-                                            handleParticipantList(d);
+                                            handleRoomData(d);
                                         });
                                         handleModalClose();
                                     }}
@@ -164,7 +163,7 @@ export default function Rooms() {
                         }}
                         disabled={buttonsDisabled}
                     >
-                        <View className="flex text-center px-[12px] py-[12px] rounded-lg">
+                        <View className="flex text-center px-[12px] py-[20px] rounded-lg shadow-lg">
                             <Text className="text-xl font-semibold text-center">{state === "creating" ? "Creating..." : "Create a room"}</Text>
                         </View>
                     </TouchableOpacity>
@@ -177,6 +176,7 @@ export default function Rooms() {
                         value={onlineRoomId}
                         style={{padding: 8}}
                         className="text-xl font-semibold"
+                        autoFocus={false}
                         onChangeText={(txt) => {setOnlineRoomId(txt.trim());}}
                     />
                     <TouchableOpacity
@@ -264,15 +264,10 @@ export default function Rooms() {
                 </View>
             }
             {state === "scavenging" &&
-                <View>
-                    {hostOrNo 
-                        ? <TouchableOpacity>
-                            <Text>See the map!</Text>
-                        </TouchableOpacity>
-                        : <Text>
-                            Start scavenging!
-                        </Text>
-                    }
+                <View className="bg-white">
+                    <Text>
+                        Start scavenging!
+                    </Text>
                 </View>
             }
         </SafeAreaView>
