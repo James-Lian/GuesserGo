@@ -27,7 +27,7 @@ export default function Game() {
         const apiKey = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
         
         if (!apiKey) {
-            console.warn('Google Maps API key not found, using default placeholder image');
+            console.warn('Google Maps API key not found, using placeholder image');
             // Return a placeholder image URL
             return `https://via.placeholder.com/640x480/cccccc/666666?text=Street+View+Image+Placeholder`;
         }
