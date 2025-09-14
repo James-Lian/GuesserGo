@@ -1,15 +1,17 @@
 import * as Location from 'expo-location';
 import { useFocusEffect, Stack, router } from "expo-router";
-import React, { useRef, useState } from "react";
-import { Text, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Modal, Pressable, Text, TouchableOpacity, View, Image } from "react-native";
 
-import Mapbox, { MapView, Camera, Images, Image, LocationPuck, UserTrackingMode, MarkerView } from "@rnmapbox/maps"; // import default export
+import Mapbox, { MapView, Camera, Images, LocationPuck, UserTrackingMode, MarkerView, UserLocation } from "@rnmapbox/maps"; // import default export
 
 import { useGlobals } from '@/lib/useGlobals';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import * as Linking from "expo-linking";
 import CustomButton from '@/components/CustomButton';
+import { Entypo, Ionicons } from '@expo/vector-icons'
+import { SvgXml } from 'react-native-svg';
+
 
 Mapbox.setAccessToken("pk.eyJ1IjoiamFtZXMtbGlhbiIsImEiOiJjbWR4azhsaTcwNHUwMmpxN3hybjI2aHNiIn0.33zeGfb12zMby5ZZSVin9Q");
 
@@ -32,12 +34,39 @@ export function requestPermissions(locationPermissions: null | boolean, setLocat
     })();
 }
 
-export async function updateLocationData(setLocationData: React.Dispatch<Location.LocationObject | null>) {
-    let location = await Location.getCurrentPositionAsync({});
+function getDistance(coord1: number[], coord2: number[]) {
+    const toRad = x => x * Math.PI / 180;
+    const [lon1, lat1] = coord1;
+    const [lon2, lat2] = coord2;
+
+    const R = 6371000; // meters
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
 }
 
 export default function Explore() {
-    const { locationPermissions, setLocationPermissions, locationData, setLocationData } = useGlobals();
+    const { locationPermissions, setLocationPermissions, imagesData, imagesFound, locationData, setLocationData } = useGlobals();
+
+    useEffect(() => {
+        if (!locationData) return;
+
+        imagesData.forEach(image => {
+            const distance = getDistance([image.locationCoords.longitude, image.locationCoords.latitude], [locationData.coords.longitude, locationData.coords.latitude]);
+            if (distance < 15) { // 50 meters threshold
+                handleImageModal(image);
+            }
+        });
+    }, [locationData]);
+
+    const onUserLocationDataUpdate = (location: Location)  => {
+        setLocationData(location);
+    }
 
     useFocusEffect(React.useCallback(() => {
         requestPermissions(locationPermissions, setLocationPermissions);
@@ -45,8 +74,40 @@ export default function Explore() {
 
     const CameraRef = useRef(null);
 
+    const [imageModalSrc, setImageModalSrc] = useState<{svg: string, downloadLink: string, locationCoords: Location.LocationObjectCoords} | null>(null);
+    const [imageModalVisible, setImageModalVisible] = useState(false);
+
+    const handleImageModal = (img: {svg: string, downloadLink: string, locationCoords: Location.LocationObjectCoords}) => {
+        setImageModalSrc(img);
+        setImageModalVisible(true);
+    }
+
+    const handleImageModalClose = () => {
+        setImageModalVisible(false);
+    }
+
+
     return (
         <View style={{ flex: 1 }}>
+            <Modal
+                animationType='slide'
+                transparent={true}
+                visible={imageModalVisible}
+                onRequestClose={() => {
+                    handleImageModalClose();
+                }}
+                style={{display: "flex", flex: 1,}}
+            >
+                <Pressable className="flex flex-1 justify-center items-center bg-[#00000099] p-[12px]" onPress={() => {handleImageModalClose()}}>
+                    <View className="bg-white py-[20px] h-[600px] px-[12px]" style={{borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 12, borderBottomRightRadius: 12}}>
+                        <Image source={{uri: imageModalSrc?.downloadLink}} style={{width: 280, height: 500}} resizeMode='contain'/>
+                        <Text>Found!</Text>
+                        <SvgXml xml={imageModalSrc ? imageModalSrc?.downloadLink : ""} width={300} height={300}/>
+                    </View>
+                </Pressable>
+
+            </Modal>
+            
             {locationPermissions
                 ? <>
                     <MapView style={{ flex: 1 }}
@@ -54,10 +115,7 @@ export default function Explore() {
                         compassEnabled={true}
                     >
                         <Camera
-                            defaultSettings={{
-                                centerCoordinate: locationData == null ? [0, 0] : [locationData?.coords.longitude, locationData?.coords.latitude] ,
-                                zoomLevel: 18,
-                            }}
+                            zoomLevel={15}
                             followUserLocation={true}
                             ref={CameraRef}
                         />
@@ -70,37 +128,25 @@ export default function Explore() {
                                 color: "black",
                             }}
                         />
+                        <UserLocation onUpdate={onUserLocationDataUpdate}/>
+                        {imagesData.map((image, id) => {
+                            return (
+                                <>
+                                    {imagesFound.includes(image.downloadLink) &&
+                                        <MarkerView 
+                                            key={id}
+                                            coordinate={[image.locationCoords.longitude, image.locationCoords.latitude]}    
+                                            anchor={{ x: 0.5, y: 1 }}
+                                        >
+                                            <TouchableOpacity className="shadow-lg">
+                                                <Entypo name="location-pin" size={20} color="red"/>
+                                            </TouchableOpacity>
+                                        </MarkerView>
+                                    }
+                                </>
+                            )
+                        })}
                     </MapView>
-                    <View className="absolute z-10 flex align-center items-center w-full bottom-12">
-                        <CustomButton
-                            // do more
-                            onPress={(e) => {
-                                router.replace("/camera");
-                            }}
-                        >
-                            <View
-                                style={{
-                                    paddingTop: 12, 
-                                    paddingBottom: 12, 
-                                    paddingLeft: 16, 
-                                    paddingRight: 16, 
-                                    display: "flex", 
-                                    borderRadius: 12,
-                                    shadowOffset: {
-                                        width: 3,
-                                        height: 3,
-                                    },
-                                    shadowColor: "black",
-                                    shadowOpacity: 0.8,
-                                    shadowRadius: 8,
-                                    elevation: 5,
-                                    backgroundColor: "rgba(123, 123, 123, 0.3)"
-                                }}
-                            >
-                                <Text style={{fontSize: 22, color: "white", fontWeight: "bold"}}>Start an Expedition!</Text>
-                            </View>
-                        </CustomButton>
-                    </View>
                 </>
                 : <View className='flex-1 flex flex-col justify-center items-center'>
                     <CustomButton

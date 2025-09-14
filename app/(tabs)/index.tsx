@@ -1,5 +1,6 @@
 import { createRoom, deleteParticipant, deleteRoom, getUserId, hostStartsGame, joinRoom, listenToRoomData, RoomTypes } from '@/lib/firestore';
 import { useGlobals } from '@/lib/useGlobals';
+import { LocationObjectCoords } from 'expo-location';
 import { Unsubscribe } from 'firebase/auth';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, TextInput, Modal, Pressable, Alert, ScrollView, Image } from 'react-native';
@@ -64,6 +65,18 @@ export default function Rooms() {
                 }
             }
         }
+    }
+
+    const [imageModalVisible, setImageModalVisible] = useState(false);
+    const [imageModalSrc, setImageModalSrc] = useState<{svg: string, downloadLink: string, locationCoords: LocationObjectCoords} | null>(null);
+    // used to display images, clues, badges, etc.
+    const handleImageModal = (img: {svg: string, downloadLink: string, locationCoords: LocationObjectCoords}) => {
+        setImageModalSrc(img);
+        setImageModalVisible(true);
+    }
+
+    const handleImageModalClose = () => {
+        setImageModalVisible(false);
     }
 
     const handleNetworkButtons = (callback: () => void) => {
@@ -161,9 +174,9 @@ export default function Rooms() {
                 && <>
                     <TouchableOpacity
                         onPress={() => {
+                            setModalVisible(true);
                             handleNetworkButtons(async () => {
                                 setState("creating");
-                                setModalVisible(true);
                                 setButtonsDisabled(false);
                             });
                         }}
@@ -187,10 +200,10 @@ export default function Rooms() {
                     />
                     <TouchableOpacity
                         onPress={() => {
+                            setModalVisible(true);
                             handleNetworkButtons(async () => {
                                 setState("joining");
 
-                                setModalVisible(true);
                                 setButtonsDisabled(false);
                             })
                         }}
@@ -209,8 +222,8 @@ export default function Rooms() {
 
                     {hostOrNo 
                         ? <TouchableOpacity
-                            style={{backgroundColor: 'rgba(255, 255, 255, 0.5)'}}
-                            className='shadow-lg'
+                            style={{backgroundColor: 'rgba(255, 255, 255, 0.8)'}}
+                            className='shadow-lg p-[8px] rounded-lg my-8'
                             onPress={() => {
                                 // upload images, start the game:
                                 hostStartsGame(onlineRoomId, imagesData);
@@ -220,7 +233,7 @@ export default function Rooms() {
                         </TouchableOpacity>
                         : <Text className="text-center text-xl font-semibold">Your host will start the game.</Text>
                     }
-                    <ScrollView className="flex flex-1 flex-col items-center">
+                    <ScrollView className="flex flex-1 flex-col">
                         <View className="flex flex-row mt-[12px] items-center px-[80px] gap-[60px]">
                             <Text className="text-lg font-semibold">Player List</Text>
                         </View>
@@ -231,12 +244,10 @@ export default function Rooms() {
                                     <Text className="text-lg font-semibold">{player.name}</Text>
                                     <Text className="text-lg">{player.id === roomData?.hostId ? "Host" : "Player"}</Text>
                                     
-                                    {hostOrNo &&
+                                    {hostOrNo && player.id !== roomData?.hostId &&
                                         <TouchableOpacity
                                             onPress={() => {
-                                                if (player.id !== roomData?.hostId) {
-                                                    deleteParticipant(onlineRoomId, player.id);
-                                                }
+                                                deleteParticipant(onlineRoomId, player.id);
                                             }}
                                         >
                                             <Text className="text-red-500 text-lg">(Kick)</Text>
@@ -289,21 +300,44 @@ export default function Rooms() {
                             return (
                                 <View key={ind}>
                                     <TouchableOpacity
-                                        onPress={{}}
+                                        onPress={() => {
+                                            handleImageModal({downloadLink: image.downloadLink, svg: image.svg, locationCoords: image.locationCoords});
+                                        }}
                                     >
-                                        <Image src={image.downloadLink} width={80} resizeMode='contain' />
+                                        <Image source={{uri: image.downloadLink}} style={{ width: 200, height: 200 }} resizeMode='contain' />
                                     </TouchableOpacity>
-                                    {imagesFound.includes(image.downloadLink) && 
-                                        <View>
-
-                                        </View>
-                                    }
                                 </View>
                             )
                         })}
                     </ScrollView>
                 </View>
             }
+            <Modal
+                animationType='slide'
+                transparent={true}
+                visible={imageModalVisible}
+                onRequestClose={() => {
+                    handleImageModalClose();
+                }}
+                style={{display: "flex", flex: 1,}}
+            >
+                <Pressable className="flex flex-1 justify-center items-center bg-[#00000099] p-[12px]" onPress={() => {handleImageModalClose()}}>
+                    <View className="flex max-h-[600px] w-full justify-end">
+                        <ScrollView className="bg-white py-[20px] h-[600px] px-[12px]" style={{borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 12, borderBottomRightRadius: 12}}>
+                            <Image source={{uri: imageModalSrc?.downloadLink}} style={{width: 280, height: 500}} resizeMode='contain'/>
+                                {imagesFound.includes(imageModalSrc ? imageModalSrc?.downloadLink : " ") && !hostOrNo
+                                    ? <>
+                                        <Text>Found</Text>
+                                        <SvgXml xml={imageModalSrc ? imageModalSrc?.downloadLink : ""} width={300} height={300}/>
+                                    </> 
+                                    : <Text>Not Found</Text>
+                                }
+                            <Text></Text>
+                            
+                        </ScrollView>
+                    </View>
+                </Pressable>
+            </Modal>
         </SafeAreaView>
     );
 }

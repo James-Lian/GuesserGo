@@ -105,7 +105,6 @@ const FingerDrawing = () => {
             </View>
             <Button title="Undo" onPress={undoLastStroke} />
             <Button title="Reset" onPress={resetDrawing} />
-            <Button title="Export SVG" onPress={exportSvg} />
         </View>
     );
 };

@@ -16,7 +16,7 @@ export function getUserId() {
 export async function joinRoom(roomId: string, playerName: string) {
     const roomRef = doc(db, "rooms", roomId);
     await updateDoc(roomRef, {
-        participants: arrayUnion([{"id": auth.currentUser?.uid, "name": playerName, "location": null}])
+        participants: arrayUnion({"id": auth.currentUser?.uid, "name": playerName, "location": null})
     });
 }
 
@@ -114,8 +114,10 @@ export async function deleteRoom(roomId: string) {
 
 export async function hostStartsGame(roomId: string, images: RoomTypes["images"]) {
     const roomRef = doc(db, "rooms", roomId);
-    await updateDoc(roomRef, {
-        images: arrayUnion([images]),
-        started: true,
-    });
+    for (let image of images) {
+        await updateDoc(roomRef, {
+            images: arrayUnion(image),
+            started: true,
+        });
+    }
 }

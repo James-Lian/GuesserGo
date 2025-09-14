@@ -20,6 +20,7 @@ export default function Camera({ defaultColor = '#ff0000' }) {
     const [permission, requestPermission] = useCameraPermissions();
     const [isDrawing, setIsDrawing] = useState(false);
     const cameraRef = useRef<CameraView>(null);
+    const [buttonsDisabled, setButtonsDisabled] = useState(false);
     
     const [photoModalVisible, setPhotoModalVisible] = useState(false);
     const [photoUri, setPhotoUri] = useState("");
@@ -44,27 +45,25 @@ export default function Camera({ defaultColor = '#ff0000' }) {
             setIsDrawing(true);
             const photo = await cameraRef.current?.takePictureAsync();
             const photoUri = photo?.uri;
+            console.log(photoUri);
             if (photoUri) {   
                 setPhotoUri(photoUri);
             }
+            setPhotoModalVisible(true);
         } else {
             Alert.alert("You must be a host of your own room to add photos. ", "If you haven't done so already, please create your own room!", [{ text: 'OK'}]);
         }
     }
 
     const handleModalClose = () => {
-        setPhotoModalVisible(!photoModalVisible);
+        setPhotoModalVisible(false);
+        setIsDrawing(false);
     }
 
     return (
         <>
             <View style={styles.container}>
-                <CameraView style={styles.camera} facing={facing} />
-                {/* take photo button */}
-                <TouchableOpacity onPress={() => takePhoto()} style={styles.iconButton}>
-                    <Ionicons name="camera" size={28} color="white" />
-                    <Text>Take Photo</Text>
-                </TouchableOpacity>
+                <CameraView style={styles.camera} facing={facing} ref={cameraRef} />
                 {/* <LocationImageOverlay
                     targetLat={43.47260261491713}
                     targetLon={-80.53998}
@@ -80,8 +79,11 @@ export default function Camera({ defaultColor = '#ff0000' }) {
                         <TouchableOpacity onPress={toggleFacing} style={styles.iconButton}>
                             <Ionicons name="camera-reverse" size={28} color="white" />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setIsDrawing(true)} style={styles.iconButton}>
-                            <Entypo name="pencil" size={28} color="white" />
+                        <TouchableOpacity onPress={() => takePhoto()} style={styles.iconButton}>
+                            <Ionicons name="camera" size={28} color="white" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => {}} style={styles.iconButton}>
+                            <Entypo name="image" size={28} color="white" />
                         </TouchableOpacity>
                     </View>
                 )}
@@ -110,6 +112,7 @@ export default function Camera({ defaultColor = '#ff0000' }) {
                                 onPress={() => {
                                     handleModalClose();
                                 }} 
+                                disabled={buttonsDisabled}
                                 style={styles.iconButton}
                             >
                                 <Ionicons name="close-circle" size={28} color="white" />
@@ -117,15 +120,19 @@ export default function Camera({ defaultColor = '#ff0000' }) {
                             <TouchableOpacity 
                                 className="flex-1" 
                                 onPress={async () => {
+                                    setButtonsDisabled(true);
                                     const dwnloadLink = await uploadUri(photoUri);
                                     const location = await Location.getCurrentPositionAsync({});
-                                    let newImageArray = [...imagesData]
-                                    newImageArray.push({svg: svgVar, downloadLink: dwnloadLink, locationCoords: location.coords})
+                                    let newImageArray = [...imagesData];
+                                    newImageArray.push({svg: svgVar, downloadLink: dwnloadLink, locationCoords: location.coords});
 
                                     setImagesData(newImageArray);
-                                    Alert.alert("Photo uploaded", "Your photo and drawing will be part of your room's scavenger hunt.", [{ text: 'OK'}])
+                                    Alert.alert("Photo uploaded", "Your photo and drawing will be part of your room's scavenger hunt.", [{ text: 'OK'}]);
                                     handleModalClose();
+                                    setButtonsDisabled(false);
+                                    setIsDrawing(false);
                                 }} 
+                                disabled={buttonsDisabled}
                                 style={styles.iconButton}
                             >
                                 <Ionicons name="checkmark-circle" size={28} color="white" />
@@ -160,16 +167,17 @@ const styles = StyleSheet.create({
         bottom: 20,
         flexDirection: 'row',
         justifyContent: 'space-around',
+        alignItems: "center",
         width: '100%',
         padding: 12,
         backgroundColor: 'rgba(0,0,0,0.3)',
         borderRadius: 16,
     },
     iconButton: {
-        marginHorizontal: 10,
         padding: 10,
         borderRadius: 50,
         backgroundColor: 'rgba(0,0,0,0.4)',
+        width: 48,
     },
     centered: {
         flex: 1,
