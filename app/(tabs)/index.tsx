@@ -60,6 +60,7 @@ export default function Rooms() {
             if (d.started === true) {
                 setImagesFound([]);
                 setState("scavenging");
+
                 if (!hostOrNo) {
                     setImagesData(d.images);
                 }
@@ -291,20 +292,21 @@ export default function Rooms() {
                 </View>
             }
             {state === "scavenging" &&
-                <View className="flex flex-1 items-center justify-center">
+                <View className="flex flex-1 items-center justify-center w-full">
                     <Text>
                         Start scavenging!
                     </Text>
-                    <ScrollView className="flex flex-row flex-wrap">
+                    <ScrollView className="flex flex-row flex-wrap w-full gap-10">
                         {imagesData.map((image, ind) => {
                             return (
-                                <View key={ind}>
+                                <View key={ind} >
                                     <TouchableOpacity
+                                        className="rounded-lg"
                                         onPress={() => {
                                             handleImageModal({downloadLink: image.downloadLink, svg: image.svg, locationCoords: image.locationCoords});
                                         }}
                                     >
-                                        <Image source={{uri: image.downloadLink}} style={{ width: 200, height: 200 }} resizeMode='contain' />
+                                        <Image className="rounded-lg p-[10px]" source={{uri: image.downloadLink}} style={{ width: 200, height: 200 }} resizeMode='contain' />
                                     </TouchableOpacity>
                                 </View>
                             )
@@ -325,15 +327,14 @@ export default function Rooms() {
                     <View className="flex max-h-[600px] w-full justify-end">
                         <ScrollView className="bg-white py-[20px] h-[600px] px-[12px]" style={{borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 12, borderBottomRightRadius: 12}}>
                             <Image source={{uri: imageModalSrc?.downloadLink}} style={{width: 280, height: 500}} resizeMode='contain'/>
-                                {imagesFound.includes(imageModalSrc ? imageModalSrc?.downloadLink : " ") && !hostOrNo
-                                    ? <>
-                                        <Text>Found</Text>
-                                        <SvgXml xml={imageModalSrc ? imageModalSrc?.downloadLink : ""} width={300} height={300}/>
-                                    </> 
-                                    : <Text>Not Found</Text>
-                                }
-                            <Text></Text>
-                            
+                            {imagesFound.includes(imageModalSrc ? imageModalSrc?.downloadLink : " ") && !hostOrNo
+                                ? <>
+                                    <Text>Found!</Text>
+                                    <SvgXml xml={imageModalSrc ? imageModalSrc?.svg : ""} width={300} height={300}/>
+                                </> 
+                                : <Text>Not Found</Text>
+                            }
+                            <Text>Hint:</Text>
                         </ScrollView>
                     </View>
                 </Pressable>

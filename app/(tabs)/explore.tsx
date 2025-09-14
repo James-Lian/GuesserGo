@@ -51,14 +51,14 @@ function getDistance(coord1: number[], coord2: number[]) {
 }
 
 export default function Explore() {
-    const { locationPermissions, setLocationPermissions, imagesData, imagesFound, locationData, setLocationData } = useGlobals();
+    const { locationPermissions, setLocationPermissions, imagesData, imagesFound, locationData, setLocationData, setImagesFound } = useGlobals();
 
     useEffect(() => {
         if (!locationData) return;
 
         imagesData.forEach(image => {
             const distance = getDistance([image.locationCoords.longitude, image.locationCoords.latitude], [locationData.coords.longitude, locationData.coords.latitude]);
-            if (distance < 15) { // 50 meters threshold
+            if (distance < 15 && !imagesFound.includes(image.downloadLink)) { // 50 meters threshold
                 handleImageModal(image);
             }
         });
@@ -79,6 +79,8 @@ export default function Explore() {
 
     const handleImageModal = (img: {svg: string, downloadLink: string, locationCoords: Location.LocationObjectCoords}) => {
         setImageModalSrc(img);
+        let newImagesFound = [...imagesFound, img.downloadLink];
+        setImagesFound(newImagesFound);
         setImageModalVisible(true);
     }
 
@@ -102,7 +104,7 @@ export default function Explore() {
                     <View className="bg-white py-[20px] h-[600px] px-[12px]" style={{borderTopLeftRadius: 12, borderTopRightRadius: 12, borderBottomLeftRadius: 12, borderBottomRightRadius: 12}}>
                         <Image source={{uri: imageModalSrc?.downloadLink}} style={{width: 280, height: 500}} resizeMode='contain'/>
                         <Text>Found!</Text>
-                        <SvgXml xml={imageModalSrc ? imageModalSrc?.downloadLink : ""} width={300} height={300}/>
+                        <SvgXml xml={imageModalSrc ? imageModalSrc?.svg : ""} width={300} height={300}/>
                     </View>
                 </Pressable>
 
