@@ -18,7 +18,7 @@ images_collection = db.images
 def upload_image():
     data = request.json
     png_blob = data.get("pngBlob")
-    latitude = data.get("latitude")
+    latitude = data.get("latitude") # Lattitudes In formation
     longitude = data.get("longitude")
 
     if not png_blob or latitude is None or longitude is None:

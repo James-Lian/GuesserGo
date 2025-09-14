@@ -13,7 +13,7 @@ import { Entypo, Ionicons } from '@expo/vector-icons'
 import { SvgXml } from 'react-native-svg';
 
 
-Mapbox.setAccessToken("pk.eyJ1IjoiamFtZXMtbGlhbiIsImEiOiJjbWR4azhsaTcwNHUwMmpxN3hybjI2aHNiIn0.33zeGfb12zMby5ZZSVin9Q");
+Mapbox.setAccessToken("Mapbox_Access_Token_Here");
 
 export function requestPermissions(locationPermissions: null | boolean, setLocationPermissions: React.Dispatch<React.SetStateAction<boolean | null>>) {
     // immediately executed async function
@@ -154,7 +154,7 @@ export default function Explore() {
                     <CustomButton
                         onPress={() => {Linking.openSettings()}}
                     >
-                        <Text style={{color: "black",}}>Location permission denied.</Text>
+                        <Text style={{color: "black",}}>Location access permission denied.</Text>
                         <Text style={{color: "black",}}>Open settings.</Text>
                     </CustomButton>
                 </View>
