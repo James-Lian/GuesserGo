@@ -1,7 +1,8 @@
-import { createRoom, deleteParticipant, deleteRoom, joinRoom } from '@/lib/firestore';
+import { createRoom, deleteParticipant, deleteRoom, getUserId, joinRoom, listenToParticipants, RoomTypes } from '@/lib/firestore';
 import { useGlobals } from '@/lib/useGlobals';
+import { Unsubscribe } from 'firebase/auth';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, TextInput, Modal, Pressable } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, TextInput, Modal, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Rooms() {
@@ -29,6 +30,18 @@ export default function Rooms() {
     // Name input
     const [modalVisible, setModalVisible] = useState(false);
     const [nameValue, setNameValue] = useState('');
+
+    const [participants, setParticipants] = useState<RoomTypes["participants"]>([]);
+    let stopListening;
+
+    const handleParticipantList = (parti: RoomTypes["participants"]) => {
+        setParticipants(parti);
+        if (!participants.map(item => item.id).includes(String(getUserId()))) {
+            Alert.alert("Removed from room", `You were removed from the room [${onlineRoomId}]. If you were not kicked out, there may be a connectivity issue. Please try again later.`, [{ text: 'OK'}])
+        } else (
+            
+        )
+    }
 
     const handleNetworkButtons = (callback: () => void) => {
         setButtonsDisabled(true);
@@ -103,6 +116,11 @@ export default function Rooms() {
                                             await joinRoom(onlineRoomId, nameValue);
                                             // FIX
                                         }
+
+                                        handleParticipantList()
+                                        stopListening = listenToParticipants(onlineRoomId, (parti) => {
+                                            handleParticipantList(parti);
+                                        });
                                     }}
                                 >
                                     <Text className="text-blue-500 text-lg">Confirm</Text>
@@ -165,7 +183,11 @@ export default function Rooms() {
                             <Text>Role</Text>
                             
                             {hostOrNo &&
-                                <TouchableOpacity>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        deleteParticipant(onlineRoomId, )
+                                    }}
+                                >
                                     <Text className="text-red-300">Kick</Text>
                                 </TouchableOpacity>
                             }
@@ -187,7 +209,7 @@ export default function Rooms() {
                                 setOnlineRoomId("");
                                 setHostOrNo(false);
 
-                                deleteParticipant()
+                                deleteParticipant(onlineRoomId, null)
                             }}
                         >
                             <Text>Leave</Text>

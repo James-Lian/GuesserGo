@@ -32,8 +32,12 @@ export function requestPermissions(locationPermissions: null | boolean, setLocat
     })();
 }
 
+export async function updateLocationData(setLocationData: React.Dispatch<Location.LocationObject | null>) {
+    let location = await Location.getCurrentPositionAsync({});
+}
+
 export default function Explore() {
-    const { locationPermissions, setLocationPermissions, locationData } = useGlobals();
+    const { locationPermissions, setLocationPermissions, locationData, setLocationData } = useGlobals();
 
     useFocusEffect(React.useCallback(() => {
         requestPermissions(locationPermissions, setLocationPermissions);
@@ -57,7 +61,6 @@ export default function Explore() {
                             followUserLocation={true}
                             ref={CameraRef}
                         />
-
                         <LocationPuck
                             visible={true}
                             puckBearing="heading"

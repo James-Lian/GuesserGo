@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, deleteDoc, Timestamp, updateDoc, arrayRemove, arrayUnion } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc, Timestamp, updateDoc, arrayRemove, arrayUnion, onSnapshot } from "firebase/firestore";
 
 import { db, auth } from "./firebaseConfig";
 
@@ -7,11 +7,24 @@ function generateRoomId(length = 6): string {
     return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
+export function getUserId() {
+    return auth.currentUser?.uid;
+}
+
 export async function joinRoom(roomId: string, playerName: string) {
     const roomRef = doc(db, "rooms", roomId);
     await updateDoc(roomRef, {
         participants: arrayUnion([{"id": auth.currentUser?.uid, "name": playerName}])
     });
+}
+
+export interface RoomTypes {
+    hostId: string,
+    roomId: string,
+    createdAt: Timestamp,
+    expireAt: Timestamp,
+    participants: { "id": string, "name": string }[],
+    started: boolean
 }
 
 export async function createRoom(hostName: string) {
@@ -35,6 +48,7 @@ export async function createRoom(hostName: string) {
         expireAt: Timestamp.fromDate(new Date(Date.now() + 5 * 60 * 60 * 1000)),
         // autodelete data 5 hours from initialization time
         participants: [{"id": hostId, "name" : hostName}],
+        started: false,
     });
 
     return {
@@ -43,6 +57,7 @@ export async function createRoom(hostName: string) {
         createdAt: Timestamp.now(),
         expireAt: Timestamp.fromDate(new Date(Date.now() + 5 * 60 * 60 * 1000)),
         participants: [{"id": hostId, "name": hostName}],
+        started: false,
     };
 }
 
@@ -67,6 +82,29 @@ export async function deleteParticipant(roomId: string, participantName: string 
     await updateDoc(roomRef, {
         participants: updatedParticipants
     });
+}
+
+export async function getAllParticipants(roomId: string) {
+    const roomRef = doc(db, "rooms", roomId);
+    const roomSnap = await getDoc(roomRef);
+
+    if (!roomSnap.exists()) return;
+
+    const data = roomSnap.data();
+    return data.participants;
+}
+
+export function listenToRoomData(roomId: string, callback: (participants: {"id": string, "name": string}[]) => void) {
+  const roomRef = doc(db, "rooms", roomId);
+
+  const unsubscribe = onSnapshot(roomRef, (docSnap) => {
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        callback(data.participants);
+    }
+  });
+
+  return unsubscribe; // Call this to stop listening when needed
 }
 
 export async function deleteRoom(roomId: string) {
