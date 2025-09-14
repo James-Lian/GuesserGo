@@ -40,7 +40,7 @@ export default function Camera2() {
                 const photo = await cameraRef.current.takePictureAsync();
                 const location = await Location.getCurrentPositionAsync({});
                 
-                // Store image with location
+                // Store image with location data
                 await storeImageWithLocation(photo.uri, location.coords);
                 
                 // Update local state
