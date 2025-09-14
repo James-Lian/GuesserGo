@@ -1,6 +1,6 @@
 // satellite image of somewhere between x km
 // user has to get to the location and take a picture which is x% similar
-// GeoGuessr style rounds and points system, micro scale
+// geoguessr style rounds and points system, micro scale
 
 import React, { useRef, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Modal, Pressable, Text, Image, Alert } from 'react-native';
