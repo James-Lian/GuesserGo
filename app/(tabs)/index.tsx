@@ -66,7 +66,7 @@ export default function Rooms() {
     }
 
     return ( 
-        <SafeAreaView style={{display: "flex", flex: 1, alignItems: "center", justifyContent: "center"}}>
+        <SafeAreaView style={{display: "flex", flex: 1, alignItems: "center", justifyContent: "center"}} className="bg-black">
             <View className="flex flex-1 items-center justify-center">
                 <Modal
                     animationType="slide"
@@ -141,7 +141,7 @@ export default function Rooms() {
                     </Pressable>
                 </Modal>
             </View>
-            {state === "idle" || state === "creating"
+            {(state === "idle" || state === "creating")
                 && <>
                     <TouchableOpacity
                         onPress={() => {
