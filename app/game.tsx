@@ -16,7 +16,7 @@ import { generateRandomLocation } from '@/lib/imageUtils';
 import StreetViewPreview from '@/components/StreetViewPreview';
 import RoundResultsScreen from '@/components/RoundResultsScreen';
 import EndScreen from '@/components/EndScreen';
-import Camera from './(tabs)/camera';
+import Camera2 from './(tabs)/camera2';
 
 export default function Game() {
     const dispatch = useAppDispatch();
@@ -160,7 +160,7 @@ export default function Game() {
             );
 
         case 'camera':
-            return <Camera />;
+            return <Camera2 />;
 
         case 'scoring':
             if (!currentRound) return null;

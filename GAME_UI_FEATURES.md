@@ -59,7 +59,7 @@ interface GameData {
 - `submitPhoto()`: Submits captured photo with location
 - `updateGameStatus()`: Updates game status
 
-## Usage in Camera Component
+## Usage in Camera2 Component
 
 ```typescript
 <GameUI 

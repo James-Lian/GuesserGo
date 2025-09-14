@@ -36,12 +36,12 @@ Check the console/logs for these messages to diagnose issues.
 
 ## Features Implemented
 
-### Camera Tab
+### Camera2 Tab
 
 - ✅ Removed drawing functionality
 - ✅ Added image capture with location storage
 - ✅ Added similarity calculation function (returns random percentage for now)
-- ✅ Camera controls for taking pictures and switching camera
+- ✅ Camera2 controls for taking pictures and switching camera
 
 ### Explore Tab
 
@@ -67,7 +67,7 @@ Created `lib/imageUtils.ts` with reusable functions:
 
 ## Usage
 
-1. **Camera Tab**: Take pictures and get similarity scores with location data
+1. **Camera2 Tab**: Take pictures and get similarity scores with location data
 2. **Explore Tab**: Navigate to camera or other features
 3. **Street View Tab**: Generate location challenges and test your navigation skills
 

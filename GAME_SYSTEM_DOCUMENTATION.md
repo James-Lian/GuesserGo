@@ -23,10 +23,10 @@ Each round follows this sequence:
 - 5-second countdown timer
 - Auto-advances to camera phase
 
-#### **Camera Phase** (60 seconds)
+#### **Camera2 Phase** (60 seconds)
 
 - User navigates to find the location
-- Camera interface with timer overlay
+- Camera2 interface with timer overlay
 - Photo capture and submit functionality
 - Auto-submit if time runs out (0 points)
 
@@ -80,7 +80,7 @@ const finalPoints = Math.round((combinedScore / 100) * 5000);
 - Street view image with coordinates
 - Auto-advance to camera phase
 
-#### **Camera** (`app/(tabs)/camera.tsx`)
+#### **Camera2** (`app/(tabs)/camera2.tsx`)
 
 - 60-second timer with auto-submit
 - Photo capture with location storage
@@ -188,7 +188,7 @@ Replace `YOUR_GOOGLE_STREET_VIEW_API_KEY` in:
 
 - **State Management**: Singleton pattern with observer pattern
 - **Navigation**: Expo Router with screen transitions
-- **Camera**: Expo Camera with location integration
+- **Camera2**: Expo Camera2 with location integration
 - **Storage**: In-memory state (can be extended to persistent storage)
 - **API Integration**: Placeholder functions ready for real APIs
 - **Error Handling**: Comprehensive error states and user feedback

@@ -1,4 +1,4 @@
-import { createRoom, deleteParticipant, deleteRoom, getUserId, joinRoom, listenToParticipants, RoomTypes } from '@/lib/firestore';
+import { createRoom, deleteParticipant, deleteRoom, getUserId, joinRoom, listenToParticipants, RoomTypes } from '@/lib/firestore2';
 import { useGlobals } from '@/lib/useGlobals';
 import { Unsubscribe } from 'firebase/auth';
 import { useEffect, useState } from 'react';
@@ -22,7 +22,7 @@ export default function Rooms() {
                     setWaitingDots("");
                 }
             }, 1000);
-            
+
             return () => clearInterval(interval);
         }
     }, [state]);
@@ -53,7 +53,7 @@ export default function Rooms() {
         setButtonsDisabled(false);
     }
 
-    return ( 
+    return (
         <SafeAreaView style={{display: "flex", flex: 1, alignItems: "center", justifyContent: "center"}}>
             <View className="flex flex-1 items-center justify-center">
                 <Modal
@@ -79,7 +79,7 @@ export default function Rooms() {
                                 />
                             </View>
                             <View className="flex flex-row self-stretch items-center justify-center">
-                                <Pressable 
+                                <Pressable
                                     style={{
                                         padding: 12,
                                         borderRadius: 12,
@@ -91,7 +91,7 @@ export default function Rooms() {
                                 >
                                     <Text className="text-lg">Cancel</Text>
                                 </Pressable>
-                                <Pressable 
+                                <Pressable
                                     style={{
                                         padding: 12,
                                         borderRadius: 12,
@@ -106,7 +106,7 @@ export default function Rooms() {
                                             setOnlineRoomId(newRoomId);
                                             setHostOrNo(true);
                                             setJoined(true);
-    
+
                                             setState("waiting-room-idle");
                                             handleModalClose();
                                         } else if (state === "joining") {
@@ -181,7 +181,7 @@ export default function Rooms() {
                         <View className="flex flex-row flex-1 items-center">
                             <Text>Name</Text>
                             <Text>Role</Text>
-                            
+
                             {hostOrNo &&
                                 <TouchableOpacity
                                     onPress={() => {
@@ -193,7 +193,7 @@ export default function Rooms() {
                             }
                         </View>
                     </View>
-                    {hostOrNo 
+                    {hostOrNo
                         ? <TouchableOpacity
                             onPress={() => {
                                 setJoined(false);
@@ -202,7 +202,7 @@ export default function Rooms() {
                             }}
                         >
                             <Text>Cancel room</Text>
-                        </TouchableOpacity> 
+                        </TouchableOpacity>
                         : <TouchableOpacity
                             onPress={() => {
                                 setJoined(false);
