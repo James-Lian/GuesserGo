@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Alert, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-// import { initializeApp } from 'firebase/app';
-// import { getAuth, browserLocalPersistence } from 'firebase/auth';
 import { GameStateManager } from '@/lib/gameState';
 import { GameSession, GameRound } from '@/lib/types';
 import { generateRandomLocation } from '@/lib/imageUtils';
@@ -10,182 +8,167 @@ import StreetViewPreview from '@/components/StreetViewPreview';
 import RoundResultsScreen from '@/components/RoundResultsScreen';
 import EndScreen from '@/components/EndScreen';
 import Camera from './(tabs)/camera';
-import { Button } from '@react-navigation/elements';
-
-// const firebaseConfig = {
-//     apiKey: 'YOUR_API_KEY',
-//     authDomain: 'YOUR_AUTH_DOMAIN',
-//     projectId: 'YOUR_PROJECT_ID',
-//     storageBucket: 'YOUR_STORAGE_BUCKET',
-//     messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-//     appId: 'YOUR_APP_ID',
-// };
-
-// const app = initializeApp(firebaseConfig);
-// const auth = getAuth(app);
-// auth.setPersistence(browserLocalPersistence);
-
+// Stable singleton without useRef
+const manager = GameStateManager.getInstance();
 export default function Game() {
     const [gameSession, setGameSession] = useState<GameSession | null>(null);
     const [currentRound, setCurrentRound] = useState<GameRound | null>(null);
-    const [streetViewImage, setStreetViewImage] = useState<string>('');
-    const gameStateManager = GameStateManager.getInstance();
-
-    useEffect(() => {
-        const unsubscribe = gameStateManager.subscribe((session) => {
-            console.log('Game: Session updated, status:', session?.gameStatus, 'round:', session?.currentRound);
-            setGameSession(session);
-            if (session) {
-                const round = gameStateManager.getCurrentRound();
-                setCurrentRound(round);
-                console.log('Game: Current round set:', round?.roundNumber);
-            }
-        });
-
-        return unsubscribe;
-    }, [gameStateManager]);
-
-    const startNextRound = useCallback(async () => {
-        console.log('Game: Starting next round');
-        // if (!gameSession) return;
-
-        try {
-            const centerLat = 43.47260261491713;
-            const centerLon = -80.53998;
-            const randomLocation = generateRandomLocation(centerLat, centerLon, 5);
-            let streetViewUrl = '';
-            try {
-                console.log('Game: Generating street view image for location:', randomLocation);
-                streetViewUrl = await generateStreetViewImage(randomLocation.latitude, randomLocation.longitude);
-            } catch (error) {
-                console.error('Failed to generate street view image:', error);
-                Alert.alert('Error', 'Failed to generate street view image');
-            }
-
-            gameStateManager.startRound(randomLocation, streetViewUrl, 60);
-            setStreetViewImage(streetViewUrl);
-
-            // Remove conflicting timeout - let StreetViewPreview handle the transition
-        } catch (error) {
-            console.error('Failed to start next round:', error);
-            Alert.alert('Error', 'Failed to start next round');
-        }
-    }, [gameSession, gameStateManager]);
-
-    const startNewGame = useCallback(async () => {
-        try {
-            // Game session is already created in streetview.tsx, just start the first round
-            console.log('Game: Starting new game');
-            await startNextRound();
-        } catch (error) {
-            console.error('Failed to start new game:', error);
-            Alert.alert('Error', 'Failed to start new game');
-        }
-    }, [startNextRound]);
-
-    const generateStreetViewImage = async (lat: number, lon: number): Promise<string> => {
-        console.log('Game: Generating street view image for location:', lat, lon);
-        const apiKey = 'AIzaSyDRcdvQwQpG3hzlkhE4pykDG5yqqHeCi_w';
-        const size = '400x300';
+    const [streetViewImage, setStreetViewImage] = useState('');
+    const [isStartingRound, setIsStartingRound] = useState(false);   // mutex
+    const [shouldStartRound, setShouldStartRound] = useState(false); // intent
+    const syncFromManager = () => {
+        setGameSession(manager.getCurrentSession());
+        setCurrentRound(manager.getCurrentRound());
+    };
+    const generateStreetViewImage = async (lat: number, lon: number) => {
+        const apiKey =
+            process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY ??
+            process.env.GOOGLE_MAPS_KEY ??
+            '';
+        const size = '640x480';
         const fov = '90';
         const heading = Math.floor(Math.random() * 360);
         return `https://maps.googleapis.com/maps/api/streetview?size=${size}&location=${lat},${lon}&fov=${fov}&heading=${heading}&pitch=0&key=${apiKey}`;
     };
-
-    // Auto-start rounds when in waiting state
+    // 1) Bootstrap on first mount
     useEffect(() => {
-        if (gameSession?.gameStatus === 'waiting') {
-            console.log('Game: Auto-starting round, current round:', gameSession.currentRound);
-            startNextRound();
+        syncFromManager();
+        const s = manager.getCurrentSession();
+        const r = manager.getCurrentRound();
+        if (!s || s.gameStatus === 'waiting' || !r) {
+            setShouldStartRound(true);
         }
-    }, [gameSession?.gameStatus, gameSession?.currentRound, startNextRound]);
-
+    }, []);
+    // 2) Safety net: if we ever land in waiting with no round, request a start
+    useEffect(() => {
+        if (gameSession?.gameStatus === 'waiting' && !currentRound) {
+            setShouldStartRound(true);
+        }
+    }, [gameSession?.gameStatus, currentRound?.roundNumber]);
+    // 3) Orchestrator: the only place that actually runs start-next-round
+    useEffect(() => {
+        if (!shouldStartRound || isStartingRound) return;
+        (async () => {
+            setIsStartingRound(true);
+            try {
+                const centerLat = 43.47260261491713;
+                const centerLon = -80.53998;
+                const randomLocation = generateRandomLocation(centerLat, centerLon, 5);
+                let url = '';
+                try {
+                    url = await generateStreetViewImage(randomLocation.latitude, randomLocation.longitude);
+                } catch (err) {
+                    console.error('Street View generation failed:', err);
+                    Alert.alert('Error', 'Failed to generate street view image');
+                }
+                await Promise.resolve(manager.startRound(randomLocation, url, 60));
+                setStreetViewImage(url);
+                syncFromManager();
+            } catch (err) {
+                console.error('Failed to start next round:', err);
+                Alert.alert('Error', 'Failed to start next round');
+            } finally {
+                setIsStartingRound(false);
+                setShouldStartRound(false);
+            }
+        })();
+    }, [shouldStartRound, isStartingRound]);
+    const requestStartRound = () => setShouldStartRound(true);
     if (!gameSession) {
-        console.log('Game: No game session, returning null');
         return (
             <SafeAreaView style={styles.container}>
                 <View style={styles.centerContainer}>
                     <Text>Starting game...</Text>
-                    <Button onPress={startNextRound}>Start Round</Button>
+                    <TouchableOpacity style={styles.debugButton} onPress={requestStartRound}>
+                        <Text style={styles.debugButtonText}>Start Round</Text>
+                    </TouchableOpacity>
                 </View>
             </SafeAreaView>
         );
     }
-
-    console.log('Game: Rendering with status:', gameSession.gameStatus);
-    
     switch (gameSession.gameStatus) {
         case 'waiting':
             return (
                 <SafeAreaView style={styles.container}>
                     <View style={styles.centerContainer}>
                         <Text>Starting round...</Text>
-                        <TouchableOpacity 
-                            style={styles.debugButton} 
-                            onPress={() => {
-                                console.log('Game: Debug button pressed, starting round manually');
-                                startNextRound();
-                            }}
-                        >
+                        <TouchableOpacity style={styles.debugButton} onPress={requestStartRound}>
                             <Text style={styles.debugButtonText}>Start Round (Debug)</Text>
                         </TouchableOpacity>
                     </View>
                 </SafeAreaView>
             );
-
         case 'streetview':
-            if (!currentRound) {
-                console.log('Game: No current round, returning null');
-                return null;
-            }
+            if (!currentRound) return null;
             return (
                 <StreetViewPreview
                     streetViewImage={streetViewImage}
                     targetLocation={currentRound.targetLocation}
                     roundNumber={currentRound.roundNumber}
                     totalRounds={gameSession.totalRounds}
-                    onComplete={() => {
-                        console.log('Game: StreetViewPreview completed, moving to camera phase');
-                        gameStateManager.moveToCameraPhase();
+                    onComplete={async () => {
+                        try {
+                            manager.moveToCameraPhase();
+                            syncFromManager();
+                        } catch (e) {
+                            console.error('Failed to move to camera phase', e);
+                            Alert.alert('Error', 'Could not move to camera phase');
+                        }
                     }}
                 />
             );
-
         case 'camera':
-            console.log('Game: Rendering camera');
+            console.log('Rendering Camera phase ---');
             return <Camera />;
-
         case 'scoring':
             if (!currentRound) return null;
             return (
                 <RoundResultsScreen
                     round={currentRound}
-                    onNext={() => {
-                        if (currentRound.roundNumber >= gameSession.totalRounds) {
-                            gameStateManager.endGame();
-                        } else {
-                            gameStateManager.nextRound();
-                            setTimeout(() => startNextRound(), 1000);
+                    isLastRound={currentRound.roundNumber >= gameSession.totalRounds}
+                    onNext={async () => {
+                        try {
+                            const isLast = currentRound.roundNumber >= gameSession.totalRounds;
+                            if (isLast) {
+                                await Promise.resolve(manager.endGame());
+                                syncFromManager();
+                            } else {
+                                await Promise.resolve(manager.nextRound());
+                                syncFromManager();
+                                setShouldStartRound(true); // queue next round start
+                            }
+                        } catch (e) {
+                            console.error('Failed advancing from scoring', e);
+                            Alert.alert('Error', 'Could not proceed to next round');
                         }
                     }}
-                    isLastRound={currentRound.roundNumber >= gameSession.totalRounds}
                 />
             );
-
         case 'finished':
             return (
                 <EndScreen
                     gameSession={gameSession}
-                    onPlayAgain={() => {
-                        gameStateManager.reset();
-                        startNewGame();
+                    onPlayAgain={async () => {
+                        try {
+                            await Promise.resolve(manager.reset());
+                            syncFromManager();
+                            setShouldStartRound(true);
+                        } catch (e) {
+                            console.error('Failed to restart game', e);
+                            Alert.alert('Error', 'Could not restart game');
+                        }
                     }}
-                    onExit={() => {
-                        gameStateManager.reset();
+                    onExit={async () => {
+                        try {
+                            await Promise.resolve(manager.reset());
+                            syncFromManager();
+                        } catch (e) {
+                            console.error('Failed to reset game', e);
+                            Alert.alert('Error', 'Could not reset game');
+                        }
                     }}
                 />
             );
-
         default:
             Alert.alert('Error', 'Unknown game status');
             return (
@@ -197,17 +180,9 @@ export default function Game() {
             );
     }
 }
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f5f5f5',
-    },
-    centerContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
+    container: { flex: 1, backgroundColor: '#F5F5F5' },
+    centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     debugButton: {
         backgroundColor: '#FF6B6B',
         paddingHorizontal: 20,
@@ -215,9 +190,14 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         marginTop: 20,
     },
-    debugButtonText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
+    debugButtonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
 });
+
+
+
+
+
+
+
+
+

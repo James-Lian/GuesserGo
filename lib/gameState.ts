@@ -1,26 +1,14 @@
-import { GameData, GameRound, GameSession } from './types';
+import { GameRound, GameSession } from './types';
 
 export class GameStateManager {
     private static instance: GameStateManager;
     private gameSession: GameSession | null = null;
-    private listeners: ((session: GameSession | null) => void)[] = [];
 
     static getInstance(): GameStateManager {
         if (!GameStateManager.instance) {
             GameStateManager.instance = new GameStateManager();
         }
         return GameStateManager.instance;
-    }
-
-    subscribe(listener: (session: GameSession | null) => void): () => void {
-        this.listeners.push(listener);
-        return () => {
-            this.listeners = this.listeners.filter(l => l !== listener);
-        };
-    }
-
-    private notifyListeners() {
-        this.listeners.forEach(listener => listener(this.gameSession));
     }
 
     startNewGame(): GameSession {
@@ -34,7 +22,7 @@ export class GameStateManager {
             gameStatus: 'waiting',
             startTime: Date.now(),
         };
-        this.notifyListeners();
+        console.log('GameStateManager: New game started', this.gameSession);
         return this.gameSession;
     }
 
@@ -59,7 +47,7 @@ export class GameStateManager {
         this.gameSession.rounds.push(round);
         this.gameSession.currentRound = round.roundNumber;
         this.gameSession.gameStatus = 'streetview';
-        this.notifyListeners();
+        console.log('GameStateManager: Round started', round);
 
         return round;
     }
@@ -72,8 +60,6 @@ export class GameStateManager {
         console.log('GameStateManager: Moving to camera phase from', this.gameSession.gameStatus);
         this.gameSession.gameStatus = 'camera';
         console.log('GameStateManager: Status updated to', this.gameSession.gameStatus);
-        this.notifyListeners();
-        console.log('GameStateManager: Listeners notified');
     }
 
     submitPhoto(photoUri: string, photoLocation: { latitude: number; longitude: number }, similarity: number): number {
@@ -105,8 +91,8 @@ export class GameStateManager {
         // Update session
         this.gameSession.totalScore += points;
         this.gameSession.gameStatus = 'scoring';
+        console.log('GameStateManager: Photo submitted, points:', points, 'total score:', this.gameSession.totalScore);
 
-        this.notifyListeners();
         return points;
     }
 
@@ -121,7 +107,7 @@ export class GameStateManager {
         currentRound.points = 0;
 
         this.gameSession.gameStatus = 'scoring';
-        this.notifyListeners();
+        console.log('GameStateManager: Time up, moving to scoring phase');
     }
 
     nextRound() {
@@ -131,7 +117,7 @@ export class GameStateManager {
             this.endGame();
         } else {
             this.gameSession.gameStatus = 'waiting';
-            this.notifyListeners();
+            console.log('GameStateManager: Moving to next round, status set to waiting');
         }
     }
 
@@ -140,7 +126,7 @@ export class GameStateManager {
 
         this.gameSession.gameStatus = 'finished';
         this.gameSession.endTime = Date.now();
-        this.notifyListeners();
+        console.log('GameStateManager: Game ended, final score:', this.gameSession.totalScore);
     }
 
     getCurrentRound(): GameRound | null {
@@ -180,6 +166,6 @@ export class GameStateManager {
 
     reset() {
         this.gameSession = null;
-        this.notifyListeners();
+        console.log('GameStateManager: Game state reset');
     }
 }

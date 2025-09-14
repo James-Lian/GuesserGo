@@ -26,19 +26,19 @@ export default function Camera({ defaultColor = '#ff0000' }) {
     const cameraRef = useRef<CameraView>(null);
     const gameStateManager = GameStateManager.getInstance();
 
-    // Subscribe to game state changes
-    useEffect(() => {
-        const unsubscribe = gameStateManager.subscribe((session) => {
-            setGameSession(session);
-            if (session) {
-                const round = gameStateManager.getCurrentRound();
-                setCurrentRound(round);
-                // Timer removed - using manual progression
-            }
-        });
+    // Simple function to refresh game state
+    const refreshGameState = () => {
+        const session = gameStateManager.getCurrentSession();
+        const round = gameStateManager.getCurrentRound();
+        setGameSession(session);
+        setCurrentRound(round);
+        console.log('Camera: State refreshed, status:', session?.gameStatus);
+    };
 
-        return unsubscribe;
-    }, [gameStateManager]);
+    // Initialize game state on mount
+    useEffect(() => {
+        refreshGameState();
+    }, []);
 
     // Timer removed - using manual progression instead
 
@@ -105,6 +105,9 @@ export default function Camera({ defaultColor = '#ff0000' }) {
             setIsPhotoCaptured(false);
             setCapturedPhoto(null);
             setCapturedLocation(null);
+            
+            // Refresh game state after submission
+            refreshGameState();
         } catch (error) {
             console.error('Error submitting photo:', error);
             Alert.alert('Error', 'Failed to submit photo');
@@ -174,6 +177,7 @@ export default function Camera({ defaultColor = '#ff0000' }) {
                     onPress={() => {
                         console.log('Camera: Skip round button pressed');
                         gameStateManager.timeUp();
+                        refreshGameState();
                     }} 
                     style={styles.skipButton}
                 >
