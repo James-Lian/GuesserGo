@@ -3,20 +3,28 @@
 // geoguessr style rounds and points system, micro scale
 
 import React, { useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, Pressable, Text, Image, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, CameraType, useCameraPermissions } from 'expo-camera';
 import { Ionicons, Entypo } from '@expo/vector-icons';
 import FingerDrawing from '@/components/FingerDrawing';
 import LocationImageOverlay from "@/components/ImagePopUp";
 import GameUI from "@/components/GameUI";
+import { uploadUri } from '@/lib/firebaseStorage';
+import { useGlobals } from '@/lib/useGlobals';
+
+import * as Location from "expo-location";
 
 export default function Camera({ defaultColor = '#ff0000' }) {
     const [facing, setFacing] = useState<CameraType>('back');
     const [permission, requestPermission] = useCameraPermissions();
     const [isDrawing, setIsDrawing] = useState(false);
-    const [score, setScore] = useState(0);
     const cameraRef = useRef<CameraView>(null);
+    
+    const [photoModalVisible, setPhotoModalVisible] = useState(false);
+    const [photoUri, setPhotoUri] = useState("");
+
+    const { joined, hostOrNo, imagesData, setImagesData, svgVar } = useGlobals();
 
     if (!permission) return <View />;
     if (!permission.granted) {
@@ -30,53 +38,103 @@ export default function Camera({ defaultColor = '#ff0000' }) {
     }
 
     const toggleFacing = () => setFacing((f) => (f === 'back' ? 'front' : 'back'));
-
-    const handleImagePress = () => {
-        alert('Image Pressed!'); //animation here + wait for opponent (geoguessr opponent has 5 sec)
-        setScore(score + 100); // increase score by 10
-    }
     
     const takePhoto = async () => {
-        console.log('Taking photo');
-        const photoURI = await cameraRef.current?.takePictureAsync();
-        console.log('Photo taken', photoURI);
+        if (joined && hostOrNo) {
+            setIsDrawing(true);
+            const photo = await cameraRef.current?.takePictureAsync();
+            const photoUri = photo?.uri;
+            if (photoUri) {   
+                setPhotoUri(photoUri);
+            }
+        } else {
+            Alert.alert("You must be a host of your own room to add photos. ", "If you haven't done so already, please create your own room!", [{ text: 'OK'}]);
+        }
+    }
+
+    const handleModalClose = () => {
+        setPhotoModalVisible(!photoModalVisible);
     }
 
     return (
-        <View style={styles.container}>
-            <CameraView style={styles.camera} facing={facing} />
-            {/* take photo button */}
-            <TouchableOpacity onPress={() => takePhoto()} style={styles.iconButton}>
-                <Ionicons name="camera" size={28} color="white" />
-                <Text>Take Photo</Text>
-            </TouchableOpacity>
-            {/* <LocationImageOverlay
-                targetLat={43.47260261491713}
-                targetLon={-80.53998}
-                radius={100}
-                imageSource={require('../../assets/flower.png')}
-                onPress={handleImagePress}
-            /> */}
+        <>
+            <View style={styles.container}>
+                <CameraView style={styles.camera} facing={facing} />
+                {/* take photo button */}
+                <TouchableOpacity onPress={() => takePhoto()} style={styles.iconButton}>
+                    <Ionicons name="camera" size={28} color="white" />
+                    <Text>Take Photo</Text>
+                </TouchableOpacity>
+                {/* <LocationImageOverlay
+                    targetLat={43.47260261491713}
+                    targetLon={-80.53998}
+                    radius={100}
+                    imageSource={require('../../assets/flower.png')}
+                    onPress={handleImagePress}
+                /> */}
+                
 
-            {isDrawing && (
-                <View style={styles.overlay} pointerEvents="box-none">
-                    <FingerDrawing />
-                </View>
-            )}
+                {/* Camera controls separate from drawing controls */}
+                {!isDrawing && (
+                    <View style={styles.bottomBar}>
+                        <TouchableOpacity onPress={toggleFacing} style={styles.iconButton}>
+                            <Ionicons name="camera-reverse" size={28} color="white" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setIsDrawing(true)} style={styles.iconButton}>
+                            <Entypo name="pencil" size={28} color="white" />
+                        </TouchableOpacity>
+                    </View>
+                )}
+                {/* <GameUI /> */}
+            </View>
+            <Modal
+                animationType='slide'
+                transparent={true}
+                visible={photoModalVisible}
+                onRequestClose={() => {
+                    handleModalClose();
+                }}
+            >
+                <Pressable className="flex flex-1 justify-center items-center bg-[#00000099] p-[12px]" onPress={() => {handleModalClose()}}>
+                    <View className="bg-white w-full h-[80%] py-[20px] px-[12px]" style={{borderTopLeftRadius: 12, borderTopRightRadius: 12}}>
+                        <Text>Confirm your photo and draw a badge!</Text>
+                        <Image src={photoUri} style={{ flex: 1 }} resizeMode="contain" />
+                        {isDrawing && (
+                            <View style={styles.overlay} pointerEvents="box-none">
+                                <FingerDrawing />
+                            </View>
+                        )}
+                        <View className="flex flex-row">
+                            <TouchableOpacity 
+                                className="flex-1" 
+                                onPress={() => {
+                                    handleModalClose();
+                                }} 
+                                style={styles.iconButton}
+                            >
+                                <Ionicons name="close-circle" size={28} color="white" />
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                className="flex-1" 
+                                onPress={async () => {
+                                    const dwnloadLink = await uploadUri(photoUri);
+                                    const location = await Location.getCurrentPositionAsync({});
+                                    let newImageArray = [...imagesData]
+                                    newImageArray.push({svg: svgVar, downloadLink: dwnloadLink, locationCoords: location.coords})
 
-            {/* Camera controls separate from drawing controls */}
-            {!isDrawing && (
-                <View style={styles.bottomBar}>
-                    <TouchableOpacity onPress={toggleFacing} style={styles.iconButton}>
-                        <Ionicons name="camera-reverse" size={28} color="white" />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setIsDrawing(true)} style={styles.iconButton}>
-                        <Entypo name="pencil" size={28} color="white" />
-                    </TouchableOpacity>
-                </View>
-            )}
-            {/* <GameUI /> */}
-        </View>
+                                    setImagesData(newImageArray);
+                                    Alert.alert("Photo uploaded", "Your photo and drawing will be part of your room's scavenger hunt.", [{ text: 'OK'}])
+                                    handleModalClose();
+                                }} 
+                                style={styles.iconButton}
+                            >
+                                <Ionicons name="checkmark-circle" size={28} color="white" />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Pressable>
+            </Modal>
+        </>
     );
 }
 

@@ -1,12 +1,14 @@
-import { createRoom, deleteParticipant, deleteRoom, getUserId, joinRoom, listenToRoomData, RoomTypes } from '@/lib/firestore';
+import { createRoom, deleteParticipant, deleteRoom, getUserId, hostStartsGame, joinRoom, listenToRoomData, RoomTypes } from '@/lib/firestore';
 import { useGlobals } from '@/lib/useGlobals';
 import { Unsubscribe } from 'firebase/auth';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, TextInput, Modal, Pressable, Alert } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, TextInput, Modal, Pressable, Alert, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SvgXml } from 'react-native-svg';
+
 export default function Rooms() {
-    const { onlineRoomId, setOnlineRoomId, hostOrNo, setHostOrNo, setJoined } = useGlobals();
+    const { onlineRoomId, setOnlineRoomId, hostOrNo, setHostOrNo, setJoined, imagesData, setImagesData, imagesFound, setImagesFound } = useGlobals();
 
     const [state, setState] = useState("idle");
     const [buttonsDisabled, setButtonsDisabled] = useState(false);
@@ -55,7 +57,11 @@ export default function Rooms() {
             }
         } else {
             if (d.started === true) {
+                setImagesFound([]);
                 setState("scavenging");
+                if (!hostOrNo) {
+                    setImagesData(d.images);
+                }
             }
         }
     }
@@ -201,10 +207,20 @@ export default function Rooms() {
                     <Text className="text-2xl font-semibold text-center">Room number: {onlineRoomId}</Text>
                     <Text className="text-xl font-semibold text-center">Waiting for participants to join{waitingDots}</Text>
 
-                    <TouchableOpacity>
-                        <Text className="text-center">Start!</Text>
-                    </TouchableOpacity>
-                    <View className="flex flex-1 overflow-y-auto flex-col items-center">
+                    {hostOrNo 
+                        ? <TouchableOpacity
+                            style={{backgroundColor: 'rgba(255, 255, 255, 0.5)'}}
+                            className='shadow-lg'
+                            onPress={() => {
+                                // upload images, start the game:
+                                hostStartsGame(onlineRoomId, imagesData);
+                            }}
+                        >
+                            <Text className="text-center text-xl font-bold">Start the game!</Text>
+                        </TouchableOpacity>
+                        : <Text className="text-center text-xl font-semibold">Your host will start the game.</Text>
+                    }
+                    <ScrollView className="flex flex-1 flex-col items-center">
                         <View className="flex flex-row mt-[12px] items-center px-[80px] gap-[60px]">
                             <Text className="text-lg font-semibold">Player List</Text>
                         </View>
@@ -229,7 +245,7 @@ export default function Rooms() {
                                 </View>
                             )
                         })}
-                    </View>
+                    </ScrollView>
                     {hostOrNo 
                         ? <TouchableOpacity
                             onPress={() => {
@@ -264,10 +280,28 @@ export default function Rooms() {
                 </View>
             }
             {state === "scavenging" &&
-                <View className="bg-white">
+                <View className="flex flex-1 items-center justify-center">
                     <Text>
                         Start scavenging!
                     </Text>
+                    <ScrollView className="flex flex-row flex-wrap">
+                        {imagesData.map((image, ind) => {
+                            return (
+                                <View key={ind}>
+                                    <TouchableOpacity
+                                        onPress={{}}
+                                    >
+                                        <Image src={image.downloadLink} width={80} resizeMode='contain' />
+                                    </TouchableOpacity>
+                                    {imagesFound.includes(image.downloadLink) && 
+                                        <View>
+
+                                        </View>
+                                    }
+                                </View>
+                            )
+                        })}
+                    </ScrollView>
                 </View>
             }
         </SafeAreaView>

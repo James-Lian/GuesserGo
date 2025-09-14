@@ -6,7 +6,18 @@ import * as ImagePicker from 'expo-image-picker'
 import * as MediaLibrary from 'expo-media-library';
 
 export async function uploadUri(uriPath: string) {
+    const timestamp = Date.now();
     
+    const response = await fetch(uriPath);
+    const blob = await response.blob();
+
+    const filename = `images/${timestamp}`;
+    const storageRef = ref(storage, filename);
+    
+    await uploadBytes(storageRef, blob);
+    const downloadURL = await getDownloadURL(storageRef);
+
+    return downloadURL;
 }
 
 export async function pickAndUploadImages() {
@@ -28,7 +39,7 @@ export async function pickAndUploadImages() {
             const response = await fetch(imageUri);
             const blob = await response.blob();
             
-            const filename = `${timestamp}(${i + 1})`;
+            const filename = `images/${timestamp}(${i + 1})`;
             const storageRef = ref(storage, filename);
             
             await uploadBytes(storageRef, blob);
@@ -36,6 +47,6 @@ export async function pickAndUploadImages() {
             downloadLinks.push(downloadURL);
         }
 
-        return downloadLinks; 
+        return {"download": downloadLinks, "uris": selectedImagesUris};
     }
 }

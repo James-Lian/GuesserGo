@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from 'firebase/storage';
 
 import { getAuth, signInAnonymously } from "firebase/auth";
 
@@ -15,12 +16,13 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-export const firebase = initializeApp(firebaseConfig);
-export const db = getFirestore(firebase);
-export const auth = getAuth(firebase);
+export const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
+export const auth = getAuth(app);
 signInAnonymously(auth).then(
     () => {
         const uid = auth.currentUser?.uid;
         console.log("Device UID:", uid);
     }
 );
+export const storage = getStorage(app);

@@ -27,7 +27,7 @@ export interface RoomTypes {
     expireAt: Timestamp,
     participants: { "id": string, "name": string, "location": Location.LocationObjectCoords | null }[],
     started: boolean,
-    images: {"svg": string, "downloadLink": string, "locationCoords": number[]}[],
+    images: {"svg": string, "downloadLink": string, "locationCoords": Location.LocationObjectCoords}[],
 }
 
 export async function createRoom(hostName: string) {
@@ -110,4 +110,12 @@ export function listenToRoomData(roomId: string, callback: (d: RoomTypes) => voi
 export async function deleteRoom(roomId: string) {
     const roomRef = doc(db, "rooms", roomId);
     await deleteDoc(roomRef);
+}
+
+export async function hostStartsGame(roomId: string, images: RoomTypes["images"]) {
+    const roomRef = doc(db, "rooms", roomId);
+    await updateDoc(roomRef, {
+        images: arrayUnion([images]),
+        started: true,
+    });
 }
