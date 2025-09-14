@@ -40,9 +40,10 @@ export async function createRoom(hostName: string) {
         roomRef = doc(db, "rooms", roomId);
         roomExists = await getDoc(roomRef);
     }
-
+    
     const hostId = auth.currentUser?.uid;
-
+    
+    
     const roomData = {
         hostId,
         roomId,
@@ -52,7 +53,7 @@ export async function createRoom(hostName: string) {
         participants: [{"id": hostId, "name" : hostName, "location": null}],
         started: false,
     }
-
+    
     await setDoc(roomRef, roomData);
 
     return roomData;

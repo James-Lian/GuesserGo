@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
-import { getAuth } from "firebase/auth";
+import { getAuth, signInAnonymously } from "firebase/auth";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBRgeUoz7wmU5Pp3jaXXiuJJOVT_FuAZTE",
@@ -18,3 +18,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+signInAnonymously(auth).then(
+    () => {
+        const uid = auth.currentUser?.uid;
+        console.log("Device UID:", uid);
+    }
+);

@@ -1,7 +1,7 @@
 import { createRoom, deleteParticipant, deleteRoom, getUserId, joinRoom, listenToRoomData, RoomTypes } from '@/lib/firestore';
 import { useGlobals } from '@/lib/useGlobals';
 import { Unsubscribe } from 'firebase/auth';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, TextInput, Modal, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,15 +12,18 @@ export default function Rooms() {
     const [buttonsDisabled, setButtonsDisabled] = useState(false);
 
     const [waitingDots, setWaitingDots] = useState("");
+    const waitingDotsRef = useRef(waitingDots);
     const maxWaitingDots = 3;
     useEffect(() => {
         if (state === "waiting-room-idle") {
             const interval = setInterval(() => {
-                if (waitingDots.length < maxWaitingDots) {
-                    setWaitingDots(prev => prev + ".");
-                } else {
-                    setWaitingDots("");
-                }
+                setWaitingDots(prev => {
+                    if (prev.length < maxWaitingDots) {
+                        return prev + ".";
+                    } else {
+                        return "";
+                    }
+                });
             }, 1000);
             
             return () => clearInterval(interval);
@@ -33,7 +36,7 @@ export default function Rooms() {
 
     const [participants, setParticipants] = useState<RoomTypes["participants"]>([]);
     const [roomData, setRoomData] = useState<RoomTypes | null>(null);
-    let stopListening;
+    let stopListening: null | Unsubscribe = null;
 
     const handleParticipantList = (d: RoomTypes) => {
         if (d.participants !== participants) {
@@ -42,12 +45,15 @@ export default function Rooms() {
 
         setRoomData(d);
 
-        if (!participants.map(item => item.id).includes(String(getUserId()))) {
-            Alert.alert("Removed from room", `You were removed from the room [${onlineRoomId}]. If you were not kicked out, there may be a connectivity issue. Please try again later.`, [{ text: 'OK'}]);
+        if (!d.participants.map(item => item.id).includes(String(getUserId()))) {
+            Alert.alert("Removed from room", `You were removed from the room [${onlineRoomId}]. There may be a connectivity issue. Please try again later.`, [{ text: 'OK'}]);
             setJoined(false);
             setOnlineRoomId("");
             setHostOrNo(false);
             setState("idle");
+            if (stopListening) {
+                stopListening();
+            }
         } else {
             if (d.started === true) {
                 setState("scavenging");
@@ -66,8 +72,8 @@ export default function Rooms() {
     }
 
     return ( 
-        <SafeAreaView style={{display: "flex", flex: 1, alignItems: "center", justifyContent: "center"}} className="bg-black">
-            <View className="flex flex-1 items-center justify-center">
+        <SafeAreaView style={{display: "flex", flex: 1, alignItems: "center", justifyContent: "center"}}>
+            <View className="absolute flex flex-1 items-center justify-center">
                 <Modal
                     animationType="slide"
                     transparent={true}
@@ -77,16 +83,17 @@ export default function Rooms() {
                     }}
                 >
                     <Pressable className="flex flex-1 justify-center items-center bg-[#00000099] p-[12px]" onPress={() => {handleModalClose()}}>
-                        <View className="flex bg-white rounded-lg pt-[12px] px-[12px]">
+                        <View className="flex w-60 bg-white rounded-lg pt-[20px] px-[12px] items-center">
                             <View className="flex">
-                                <Text className="text-lg">Input your name</Text>
+                                <Text className="text-lg text-center">Input your name</Text>
                                 <TextInput
                                     autoCapitalize="words"
                                     autoCorrect={false}
                                     allowFontScaling={false}
-                                    placeholder="Input your name"
+                                    placeholder="Your name here"
                                     placeholderTextColor={"lightgray"}
                                     value={nameValue}
+                                    style={{ paddingTop: 8, marginBottom: 12, fontSize: 16, textAlign: "center" }}
                                     onChangeText={(txt) => {setNameValue(txt);}}
                                 />
                             </View>
@@ -95,7 +102,8 @@ export default function Rooms() {
                                     style={{
                                         padding: 12,
                                         borderRadius: 12,
-                                        flex: 1
+                                        flex: 1,
+                                        display: 'flex',
                                     }}
                                     onPress={() => {
                                         handleModalClose();
@@ -107,15 +115,18 @@ export default function Rooms() {
                                     style={{
                                         padding: 12,
                                         borderRadius: 12,
-                                        flex: 1
+                                        flex: 1,
+                                        display: 'flex',
                                     }}
                                     onPress={async () => {
+                                        let newRoomId = "";
                                         if (state === "creating") {
                                             if (onlineRoomId !== "") {
                                                 deleteRoom(onlineRoomId);
                                             }
-                                            const { roomId: newRoomId } = await createRoom(nameValue);
-                                            setOnlineRoomId(newRoomId);
+                                            const { roomId } = await createRoom(nameValue);
+                                            newRoomId = roomId;
+                                            setOnlineRoomId(roomId);
                                             setHostOrNo(true);
                                             setJoined(true);
                                         } else if (state === "joining") {
@@ -127,8 +138,8 @@ export default function Rooms() {
 
                                         }
                                         
-                                        setState("waiting-room-idle")
-                                        stopListening = listenToRoomData(onlineRoomId, (d) => {
+                                        setState("waiting-room-idle");
+                                        stopListening = listenToRoomData(newRoomId, (d) => {
                                             handleParticipantList(d);
                                         });
                                         handleModalClose();
@@ -147,14 +158,15 @@ export default function Rooms() {
                         onPress={() => {
                             handleNetworkButtons(async () => {
                                 setState("creating");
-
                                 setModalVisible(true);
                                 setButtonsDisabled(false);
                             });
                         }}
                         disabled={buttonsDisabled}
                     >
-                        <Text>{state === "creating" ? "Creating..." : "Create a room"}</Text>
+                        <View className="flex text-center px-[12px] py-[12px] rounded-lg">
+                            <Text className="text-xl font-semibold text-center">{state === "creating" ? "Creating..." : "Create a room"}</Text>
+                        </View>
                     </TouchableOpacity>
                     <TextInput
                         autoCapitalize="none"
@@ -163,6 +175,8 @@ export default function Rooms() {
                         placeholder="Room Id (e.g. jGInAU)"
                         placeholderTextColor={"lightgray"}
                         value={onlineRoomId}
+                        style={{padding: 8}}
+                        className="text-xl font-semibold"
                         onChangeText={(txt) => {setOnlineRoomId(txt.trim());}}
                     />
                     <TouchableOpacity
@@ -176,25 +190,30 @@ export default function Rooms() {
                         }}
                         disabled={buttonsDisabled}
                     >
-                        <Text>Join a room</Text>
+                        <View className="text-center px-[12px] py-[12px] rounded-lg">
+                            <Text className="text-xl font-semibold">Join a room</Text>
+                        </View>
                     </TouchableOpacity>
                 </>
             }
             {state === "waiting-room-idle" &&
-                <View className="flex flex-1">
-                    <Text>Waiting for participants to join{waitingDots}</Text>
-                    <Text>{onlineRoomId}</Text>
+                <View className="flex flex-1 pt-[32px] w-full items-center">
+                    <Text className="text-2xl font-semibold text-center">Room number: {onlineRoomId}</Text>
+                    <Text className="text-xl font-semibold text-center">Waiting for participants to join{waitingDots}</Text>
 
                     <TouchableOpacity>
-                        <Text>Start!</Text>
+                        <Text className="text-center">Start!</Text>
                     </TouchableOpacity>
-                    <View className="flex flex-1 overflow-y-auto flex-col">
+                    <View className="flex flex-1 overflow-y-auto flex-col items-center">
+                        <View className="flex flex-row mt-[12px] items-center px-[80px] gap-[60px]">
+                            <Text className="text-lg font-semibold">Player List</Text>
+                        </View>
                         {participants.map((player, ind) => {
                             return (
-                                <View key={ind} className="flex flex-row flex-1 items-center">
+                                <View key={ind} className="flex flex-row flex-1 items-center px-[80px] gap-[60px]">
                                         
-                                    <Text>{player.name}</Text>
-                                    <Text>{player.id === roomData?.hostId ? "Host" : "Player"}</Text>
+                                    <Text className="text-lg font-semibold">{player.name}</Text>
+                                    <Text className="text-lg">{player.id === roomData?.hostId ? "Host" : "Player"}</Text>
                                     
                                     {hostOrNo &&
                                         <TouchableOpacity
@@ -204,7 +223,7 @@ export default function Rooms() {
                                                 }
                                             }}
                                         >
-                                            <Text className="text-red-300">Kick</Text>
+                                            <Text className="text-red-500 text-lg">(Kick)</Text>
                                         </TouchableOpacity>
                                     }
                                 </View>
@@ -218,6 +237,10 @@ export default function Rooms() {
                                 setOnlineRoomId("");
                                 setHostOrNo(false);
                                 setState("idle");
+
+                                if (stopListening) {
+                                    stopListening();
+                                }
                             }}
                         >
                             <Text>Cancel room</Text>
@@ -228,6 +251,9 @@ export default function Rooms() {
                                 setOnlineRoomId("");
                                 setHostOrNo(false);
                                 setState("idle");
+                                if (stopListening) {
+                                    stopListening();
+                                }
 
                                 deleteParticipant(onlineRoomId, null)
                             }}
