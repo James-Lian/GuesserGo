@@ -16,9 +16,9 @@ export default function TabLayout() {
             }}
         />
         <Tabs.Screen
-            name="explore"
+            name="streetview"
             options={{
-                title: 'Explore',
+                title: 'Street View',
             }}
         />
         </Tabs>
